@@ -258,6 +258,7 @@ class PatientManager extends Component
             // Si on est en mode création uniquement, fermer aussi le modal parent après succès
             if ($this->creationOnly) {
                 $this->emit('closeNouveauPatientModal');
+                $this->emit('patientCreated', $patient->ID);
             }
         } catch (\Exception $e) {
             \Log::error('Erreur création patient : ' . $e->getMessage());
