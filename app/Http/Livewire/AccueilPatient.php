@@ -464,9 +464,11 @@ class AccueilPatient extends Component
     {
         $patient = Patient::find($patientId);
         if ($patient) {
-            $this->setPatient($patient);
+            $this->setPatient($patient->toArray());
             $this->showCreatePatientModal = false;
-            $this->emit('patientCreated', $patientId);
+            $this->showNouveauPatientModal = false;
+            // Notifier PatientSearch pour afficher le patient sélectionné
+            $this->emit('setPatientExterne', $patientId);
         }
     }
 
