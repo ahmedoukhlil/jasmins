@@ -22,7 +22,7 @@ return new class extends Migration
             $table->integer('nordre')->default(1);
             $table->string('user')->default('1');
             $table->unsignedInteger('fkidassureur')->default(1)->index('Index_2');
-            $table->string('ActeArab', 245)->default('NR');
+            $table->string('ActeArab', 245)->nullable();
             $table->unsignedInteger('Masquer')->default(0)->index('Index_3');
             });
         }

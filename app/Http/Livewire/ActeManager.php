@@ -33,6 +33,7 @@ class ActeManager extends Component
             'acteNom' => 'required|min:3',
             'montant' => 'required|numeric|min:0',
             'assureurId' => 'required|exists:assureurs,IDAssureur',
+            'acteArab' => 'nullable',
         ];
     }
 
