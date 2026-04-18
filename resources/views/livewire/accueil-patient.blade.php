@@ -1,0 +1,826 @@
+<div class="w-full px-3 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto mt-4 md:mt-8">
+
+    {{-- Bannière de bienvenue --}}
+    <div class="mb-6 p-4 md:p-6 rounded-xl bg-primary text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="text-center md:text-left">
+            @php
+                $nomCab = Auth::user()->cabinet->NomCabinet ?? null;
+                $excluded = ['Cabinet Savwa', 'Cabinet Medical Savwa', 'Cabinet savwa', 'SysMedical'];
+                if (!$nomCab || in_array($nomCab, $excluded)) $nomCab = 'SysMedical';
+            @endphp
+            <h1 class="text-2xl md:text-3xl font-bold mb-1">{{ $nomCab }}</h1>
+            <p class="text-white/80 text-sm md:text-base">
+                {{ is_array(Auth::user()->typeuser) ? (Auth::user()->typeuser['Libelle'] ?? '') : (is_object(Auth::user()->typeuser) ? Auth::user()->typeuser->Libelle : Auth::user()->typeuser) }}
+                <span class="font-bold">{{ Auth::user()->NomComplet ?? Auth::user()->name ?? '' }}</span>
+            </p>
+        </div>
+        <i class="fas fa-staff-snake text-5xl opacity-20"></i>
+    </div>
+
+    {{-- Recherche patient + actions rapides --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 flex flex-col lg:flex-row items-stretch lg:items-center gap-4 mb-6">
+        <div class="w-full lg:flex-1">
+            <livewire:patient-search />
+        </div>
+        <div class="flex flex-wrap gap-2 lg:w-auto">
+            <button wire:click="openGestionPatientsModal" class="btn-secondary text-sm">
+                <i class="fas fa-users"></i> Liste patients
+            </button>
+            <button wire:click="showCreateRdv" class="btn-secondary text-sm relative">
+                <i class="fas fa-calendar-plus"></i> Gestion RDV
+                @if($rdvARappelerCount > 0)
+                    <span class="absolute -top-2 -right-2 inline-flex items-center justify-center min-w-[1.2rem] h-5 px-1 rounded-full bg-red-500 text-white text-xs font-bold shadow">
+                        <i class="fas fa-bell text-xs mr-0.5"></i>{{ $rdvARappelerCount }}
+                    </span>
+                @endif
+            </button>
+        </div>
+    </div>
+
+    @php $u = Auth::user(); @endphp
+
+    {{-- Barre de navigation principale --}}
+    <div class="flex flex-wrap gap-2 md:gap-3 mb-4 py-3 px-4 justify-center rounded-xl bg-white border border-gray-100 shadow-sm">
+
+        {{-- Gestion du patient (visible si accès patient) --}}
+        @if($u->hasPermission('patient.view'))
+        <button wire:click="togglePatientMenu"
+            @if(!$selectedPatient) disabled title="Sélectionnez un patient d'abord" @endif
+            class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]
+                {{ $showPatientMenu ? '!bg-primary !text-white !border-primary' : '' }}
+                {{ !$selectedPatient ? 'opacity-50 cursor-not-allowed' : '' }}">
+            <i class="fas fa-user-friends"></i>
+            <span>Gestion du patient</span>
+            <i class="fas fa-chevron-{{ $showPatientMenu ? 'up' : 'down' }} text-xs opacity-60"></i>
+        </button>
+        @endif
+
+        {{-- Caisse Paie --}}
+        @if($u->hasPermission('caisse-operations.view'))
+        <button wire:click="showCaisseOperations" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]">
+            <i class="fas fa-cash-register"></i> Caisse Paie
+        </button>
+        @endif
+
+        {{-- Dépenses --}}
+        @if($u->hasPermission('depenses.view'))
+        <button wire:click="openDepenses" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]">
+            <i class="fas fa-receipt"></i> Dépenses
+        </button>
+        @endif
+
+        {{-- Statistiques --}}
+        @if($u->hasPermission('statistiques.view'))
+        <button wire:click="showStatistiques" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]">
+            <i class="fas fa-chart-bar"></i> Statistiques
+        </button>
+        @endif
+
+        {{-- Salle d'attente --}}
+        @if($u->hasPermission('salle-attente.view'))
+        <div class="relative">
+            <button wire:click="ouvrirSalleAttente"
+                class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]
+                    {{ $showSalleAttenteModal ? '!bg-primary !text-white !border-primary' : '' }}">
+                <i class="fas fa-couch"></i>
+                <span>Salle d'attente</span>
+            </button>
+            <span id="salle-attente-badge"
+                  class="hidden absolute -top-2.5 -right-2.5 items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold shadow-lg z-10 pointer-events-none">
+                <i class="fas fa-bell text-[9px]"></i><span id="salle-attente-count">0</span>
+            </span>
+        </div>
+        @endif
+
+        {{-- Salle de soins (infirmiers) --}}
+        @if($u->hasPermission('salle-soins.view'))
+        <div class="relative">
+            <button wire:click="ouvrirSalleSoins"
+                class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]
+                    {{ $showSalleSoinsModal ? '!bg-primary !text-white !border-primary' : '' }}">
+                <i class="fas fa-syringe"></i>
+                <span>Salle de soins</span>
+            </button>
+            <span id="salle-soins-badge"
+                  class="hidden absolute -top-2.5 -right-2.5 items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold shadow-lg z-10 pointer-events-none">
+                <i class="fas fa-bell text-[9px]"></i><span id="salle-soins-count">0</span>
+            </span>
+        </div>
+        @endif
+
+        {{-- Gestion du cabinet --}}
+        @if($u->hasAnyPermission(['medecin.view','assureur.view','act.view','stock.view','pharmacie.view','user.view','cabinet.manage']))
+        <button wire:click="toggleCabinetMenu"
+            class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]
+                {{ $showCabinetMenu ? '!bg-primary !text-white !border-primary' : '' }}">
+            <i class="fas fa-cogs"></i>
+            <span>Gestion du cabinet</span>
+            <i class="fas fa-chevron-{{ $showCabinetMenu ? 'up' : 'down' }} text-xs opacity-60"></i>
+        </button>
+        @endif
+    </div>
+
+    {{-- Sous-menu Gestion du patient --}}
+    @if($selectedPatient && $showPatientMenu)
+    <div class="patient-menu-container mb-4">
+        <div class="patient-submenu flex flex-wrap gap-2 md:gap-3 justify-center py-3 px-4 bg-blue-50/60 border border-primary/20 rounded-xl show" data-menu="patient">
+
+            @if($u->hasPermission('consultation.view'))
+            <button wire:click="showConsultation" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+                <i class="fas fa-stethoscope"></i>
+                <span>Consultation</span>
+            </button>
+            @endif
+
+            @if($u->hasPermission('facture.view') || $u->hasPermission('facture.view.own'))
+            <button wire:click="showReglement" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Facture / Devis</span>
+            </button>
+            @endif
+
+            @if($u->hasPermission('rendez-vous.view'))
+            <button wire:click="showRendezVous" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+                <i class="fas fa-calendar-check"></i>
+                <span>Rendez-vous</span>
+            </button>
+            @endif
+
+            @if($u->hasPermission('ordonnance.create'))
+            <button wire:click="ouvrirOrdonnanceModal" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+                <i class="fas fa-file-prescription"></i>
+                <span>Ordonnances</span>
+            </button>
+            @endif
+
+            @if($u->hasPermission('dossier.view'))
+            <button wire:click="showDossierMedical" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+                <i class="fas fa-folder-open"></i>
+                <span>Dossier médical</span>
+            </button>
+            @endif
+        </div>
+    </div>
+    @endif
+
+    {{-- Sous-menu Gestion du cabinet --}}
+    @if($showCabinetMenu)
+    <div class="mb-4">
+        <div class="flex flex-wrap gap-2 md:gap-3 justify-center py-3 px-4 bg-gray-50 border border-gray-200 rounded-xl" data-menu="cabinet">
+
+            @if($u->hasPermission('assureur.view'))
+            <button wire:click="ouvrirAssureurModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+                <i class="fas fa-shield-alt"></i> Assurances
+            </button>
+            @endif
+
+            @if($u->hasPermission('act.view'))
+            <button wire:click="ouvrirListeActesModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+                <i class="fas fa-list-alt"></i> Actes / Soins
+            </button>
+            @endif
+
+            @if($u->hasPermission('pharmacie.view'))
+            <button wire:click="ouvrirListeMedicamentsModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+                <i class="fas fa-pills"></i> Médicaments
+            </button>
+            @endif
+
+            @if($u->hasPermission('medecin.view'))
+            <button wire:click="ouvrirMedecinsModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+                <i class="fas fa-user-md"></i> Médecins
+            </button>
+            @endif
+
+            @if($u->hasPermission('caisse-operations.view'))
+            <button wire:click="ouvrirTypePaiementModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+                <i class="fas fa-credit-card"></i> Paiements
+            </button>
+            @endif
+
+            @if($u->hasPermission('stock.view'))
+            <div class="relative inline-flex items-center gap-1">
+                <button wire:click="ouvrirDashboardStock" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+                    <i class="fas fa-chart-line"></i> Suivi stock
+                </button>
+                {{-- Badge stock faible (orange) --}}
+                <span id="stock-faible-badge"
+                      class="hidden absolute -top-2.5 left-2 items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-orange-500 text-white text-xs font-bold shadow-lg z-10 pointer-events-none"
+                      title="Produits en stock faible">
+                    <i class="fas fa-bell text-[9px]"></i><span id="stock-faible-count">0</span>
+                </span>
+                {{-- Badge stock épuisé (rouge) --}}
+                <span id="stock-epuise-badge"
+                      class="hidden absolute -top-2.5 right-2 items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold shadow-lg z-10 pointer-events-none"
+                      title="Produits épuisés">
+                    <i class="fas fa-bell text-[9px]"></i><span id="stock-epuise-count">0</span>
+                </span>
+            </div>
+            @endif
+
+            @if($u->hasPermission('user.view'))
+            <button wire:click="openUsersModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+                <i class="fas fa-users-cog"></i> Utilisateurs
+            </button>
+            @endif
+
+            @if($u->hasPermission('cabinet.manage'))
+            <button wire:click="ouvrirParametresCabinet"
+                class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]
+                    {{ $showParametresCabinetModal ? '!bg-primary !text-white !border-primary' : '' }}">
+                <i class="fas fa-sliders-h"></i> Paramètres
+            </button>
+            @endif
+        </div>
+    </div>
+    @endif
+
+    {{-- Composant HistoriquePaiement toujours présent --}}
+    <livewire:historique-paiement wire:key="historique-paiement" lazy />
+
+    {{-- Notifications flash --}}
+    @if(session()->has('success'))
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+         class="fixed bottom-4 right-4 z-50 toast toast-success" role="alert">
+        <i class="fas fa-check-circle text-green-600"></i>
+        <span>{{ session('success') }}</span>
+        <button @click="show = false" class="ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    @endif
+
+    @if(session()->has('error'))
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+         class="fixed bottom-4 right-4 z-50 toast toast-error" role="alert">
+        <i class="fas fa-exclamation-circle text-red-600"></i>
+        <span>{{ session('error') }}</span>
+        <button @click="show = false" class="ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    @endif
+
+
+    {{-- ═══════════════════════════════════════════════════════
+         MODAUX — pattern unifié : .modal-overlay / .modal-box
+    ════════════════════════════════════════════════════════ --}}
+
+    @php
+$patientNom = $selectedPatient
+    ? (is_array($selectedPatient)
+        ? ($selectedPatient['NomPatient'] ?? $selectedPatient['Nom'] ?? 'Patient')
+        : ($selectedPatient->NomPatient ?? $selectedPatient->Nom ?? 'Patient'))
+    : '';
+$patientId = $selectedPatient
+    ? (is_array($selectedPatient) ? ($selectedPatient['ID'] ?? '') : ($selectedPatient->ID ?? ''))
+    : '';
+@endphp
+
+{{-- ── GESTION DU PATIENT ── --}}
+
+{{-- Consultation --}}
+@if($showConsultation && $selectedPatient)
+<div class="modal-overlay" wire:click.self="fermerConsultationModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <div>
+                <h2><i class="fas fa-stethoscope mr-2"></i>Consultation</h2>
+                <p>{{ $patientNom }}</p>
+            </div>
+            <button type="button" wire:click="fermerConsultationModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:consultation-form wire:key="consultation-modal-{{ $patientId }}" :patient="$selectedPatient" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Facture / Devis --}}
+@if($showReglement && $selectedPatient)
+<div class="modal-overlay" wire:click.self="fermerReglementModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <div>
+                <h2><i class="fas fa-file-invoice-dollar mr-2"></i>Facture / Devis</h2>
+                <p>{{ $patientNom }}</p>
+            </div>
+            <button type="button" wire:click="fermerReglementModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:reglement-facture wire:key="reglement-modal-{{ $patientId }}" :selectedPatient="$selectedPatient" lazy />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Rendez-vous patient --}}
+@if($showRendezVous && $selectedPatient)
+<div class="modal-overlay" wire:click.self="fermerRendezVousModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <div>
+                <h2><i class="fas fa-calendar-check mr-2"></i>Rendez-vous</h2>
+                <p>{{ $patientNom }}</p>
+            </div>
+            <button type="button" wire:click="fermerRendezVousModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:create-rendez-vous wire:key="rendez-vous-modal-{{ $patientId }}" :patient="$selectedPatient" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Ordonnances --}}
+@if($showOrdonnanceModal && $selectedPatient)
+<div class="modal-overlay" wire:click.self="fermerOrdonnanceModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <div>
+                <h2><i class="fas fa-file-prescription mr-2"></i>Ordonnances</h2>
+                <p>{{ $patientNom }}</p>
+            </div>
+            <button type="button" wire:click="fermerOrdonnanceModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:ordonnance-manager wire:key="ordonnance-modal-{{ $patientId }}" :patient="$selectedPatient" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Dossier médical --}}
+@if($showDossierMedical && $selectedPatient)
+<div class="modal-overlay" wire:click.self="fermerDossierMedicalModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <div>
+                <h2><i class="fas fa-folder-open mr-2"></i>Dossier médical</h2>
+                <p>{{ $patientNom }}</p>
+            </div>
+            <button type="button" wire:click="fermerDossierMedicalModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:dossier-medical-manager wire:key="dossier-medical-{{ $patientId }}" :patient="$selectedPatient" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- ── GESTION RDV (général) ── --}}
+
+@if($showCreateRdvModal)
+<div class="modal-overlay" wire:click.self="closeCreateRdvModal">
+    <div class="modal-box max-w-6xl w-full">
+        <div class="modal-header">
+            <div>
+                <h2><i class="fas fa-calendar-alt mr-2"></i>Gestion des Rendez-vous</h2>
+            </div>
+            <button type="button" wire:click="closeCreateRdvModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        {{-- Onglets --}}
+        <div class="border-b border-gray-200 px-6 flex gap-6">
+            <button wire:click="$set('activeRdvTab', 'create')"
+                class="py-3 px-1 border-b-2 font-medium text-sm
+                    {{ $activeRdvTab === 'create' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                <i class="fas fa-plus mr-1"></i> Gestion RDV
+            </button>
+            <button wire:click="$set('activeRdvTab', 'reminders')"
+                class="py-3 px-1 border-b-2 font-medium text-sm relative
+                    {{ $activeRdvTab === 'reminders' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                <i class="fas fa-bell mr-1"></i> Rappels RDV
+                @if($rdvRemindersCount > 0)
+                <span class="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">{{ $rdvRemindersCount }}</span>
+                @endif
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="modal-loading" class="hidden flex items-center justify-center py-8">
+                <div class="spinner spinner-dark"></div>
+                <span class="ml-3 text-gray-600 text-sm">Chargement...</span>
+            </div>
+            @if($activeRdvTab === 'create')
+                <livewire:create-rendez-vous wire:key="create-rdv-modal" :patient="$selectedPatient" />
+            @elseif($activeRdvTab === 'reminders')
+                <livewire:rdv-reminders wire:key="rdv-reminders-modal" />
+            @endif
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- ── GESTION DES PATIENTS ── --}}
+
+@if($showNouveauPatientModal)
+<div class="modal-overlay" wire:click.self="closeNouveauPatientModal">
+    <div class="modal-box max-w-3xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-user-plus mr-2"></i>Nouveau patient</h2>
+            <button type="button" wire:click="closeNouveauPatientModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:patient-manager wire:key="nouveau-patient-modal" :creationOnly="true" />
+        </div>
+    </div>
+</div>
+@endif
+
+@if($showGestionPatientsModal)
+<div class="modal-overlay" wire:click.self="closeGestionPatientsModal">
+    <div class="modal-box max-w-6xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-users mr-2"></i>Gestion des patients</h2>
+            <button type="button" wire:click="closeGestionPatientsModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:patient-manager />
+        </div>
+    </div>
+</div>
+@endif
+
+@if($showCreateModal)
+<div class="modal-overlay" wire:click.self="closeCreateModal">
+    <div class="modal-box max-w-6xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-users mr-2"></i>Gestion des patients</h2>
+            <button type="button" wire:click="closeCreateModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:patient-manager />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- ── GESTION DU CABINET ── --}}
+
+{{-- Caisse Paie --}}
+@if($showCaisseOperations)
+<div class="modal-overlay" wire:click.self="fermerCaisseOperationsModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-cash-register mr-2"></i>Caisse Paie</h2>
+            <button type="button" wire:click="fermerCaisseOperationsModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:caisse-operations-manager wire:key="caisse-operations-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Dépenses --}}
+@if($showDepenses)
+<div class="modal-overlay" wire:click.self="fermerDepensesModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-receipt mr-2"></i>Dépenses</h2>
+            <button type="button" wire:click="fermerDepensesModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:depenses-manager wire:key="depenses-manager-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Statistiques --}}
+@if($isDocteurProprietaire && $showStatistiques)
+<div class="modal-overlay" wire:click.self="fermerStatistiquesModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-chart-bar mr-2"></i>Statistiques</h2>
+            <button type="button" wire:click="fermerStatistiquesModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:statistiques-manager wire:key="statistiques-manager-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Assurances --}}
+@if($showAssureurModal)
+<div class="modal-overlay" wire:click.self="fermerAssureurModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-shield-alt mr-2"></i>Gestion des assurances</h2>
+            <button type="button" wire:click="fermerAssureurModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:assureur-manager wire:key="assureur-manager-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Actes / Soins --}}
+@if($showListeActesModal)
+<div class="modal-overlay" wire:click.self="fermerListeActesModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-list-alt mr-2"></i>Liste des actes</h2>
+            <button type="button" wire:click="fermerListeActesModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:acte-manager wire:key="acte-manager-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Médicaments --}}
+@if($showListeMedicamentsModal)
+<div class="modal-overlay" wire:click.self="fermerListeMedicamentsModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-pills mr-2"></i>Liste des médicaments</h2>
+            <button type="button" wire:click="fermerListeMedicamentsModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:medicament-manager wire:key="medicament-manager-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Médecins --}}
+@if($showMedecinsModal)
+<div class="modal-overlay" wire:click.self="fermerMedecinsModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-user-md mr-2"></i>Gestion des médecins</h2>
+            <button type="button" wire:click="fermerMedecinsModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:medecin-manager wire:key="medecin-manager-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Modes de paiement --}}
+@if($showTypePaiementModal)
+<div class="modal-overlay" wire:click.self="fermerTypePaiementModal">
+    <div class="modal-box max-w-4xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-credit-card mr-2"></i>Modes de paiement</h2>
+            <button type="button" wire:click="fermerTypePaiementModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:type-paiement-manager wire:key="type-paiement-manager-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Suivi de stock --}}
+@if($showDashboardStock)
+<div class="modal-overlay" wire:click.self="fermerDashboardStockModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-chart-line mr-2"></i>Suivi de stock</h2>
+            <button type="button" wire:click="fermerDashboardStockModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:pharmacie-manager wire:key="dashboard-stock-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Salle d'attente --}}
+@if($showSalleAttenteModal)
+<div class="modal-overlay" wire:click.self="fermerSalleAttenteModal">
+    <div class="modal-box max-w-4xl w-full">
+        <div class="modal-header">
+            <div>
+                <h2><i class="fas fa-couch mr-2"></i>Salle d'attente</h2>
+                <p class="text-sm text-white/70">Rendez-vous du jour — cliquez sur un patient pour accéder à son dossier</p>
+            </div>
+            <button type="button" wire:click="fermerSalleAttenteModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:salle-attente wire:key="salle-attente-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Salle de soins --}}
+@if($showSalleSoinsModal)
+<div class="modal-overlay" wire:click.self="fermerSalleSoinsModal">
+    <div class="modal-box max-w-3xl w-full">
+        <div class="modal-header">
+            <div>
+                <h2><i class="fas fa-syringe mr-2"></i>Salle de soins</h2>
+                <p>Ordonnances internes prescrites aujourd'hui — soins à effectuer</p>
+            </div>
+            <button type="button" wire:click="fermerSalleSoinsModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:salle-soins wire:key="salle-soins-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Paramètres cabinet --}}
+@if($showParametresCabinetModal)
+<div class="modal-overlay" wire:click.self="fermerParametresCabinet">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <div>
+                <h2><i class="fas fa-sliders-h mr-2"></i>Paramètres du cabinet</h2>
+                <p>Configuration de l'en-tête et du pied de page des imprimés</p>
+            </div>
+            <button type="button" wire:click="fermerParametresCabinet" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:parametres-cabinet wire:key="parametres-cabinet-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Utilisateurs --}}
+@if($showUsersModal)
+<div class="modal-overlay" wire:click.self="closeUsersModal">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
+            <h2><i class="fas fa-users-cog mr-2"></i>Gestion des utilisateurs</h2>
+            <button type="button" wire:click="closeUsersModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:user-manager wire:key="user-manager-modal" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Conteneur de notifications flottantes --}}
+<div id="salle-notif-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none" style="max-width:320px;"></div>
+
+<script>
+/* ── Compteur générique badge ── */
+function rafraichirCompteur(url, badgeId, countId) {
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById(badgeId);
+            const count = document.getElementById(countId);
+            if (!badge || !count) return;
+            const n = data.count || 0;
+            count.textContent = n;
+            if (n > 0) {
+                badge.classList.remove('hidden');
+                badge.classList.add('inline-flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('inline-flex');
+            }
+        }).catch(() => {});
+}
+
+function rafraichirCompteurSalleAttente() {
+    rafraichirCompteur('/api/salle-attente/count', 'salle-attente-badge', 'salle-attente-count');
+}
+function rafraichirCompteurSalleSoins() {
+    rafraichirCompteur('/api/salle-soins/count', 'salle-soins-badge', 'salle-soins-count');
+}
+function rafraichirStockAlerts() {
+    fetch('/api/stock/alerts', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+        .then(r => r.json())
+        .then(data => {
+            const bFaible  = document.getElementById('stock-faible-badge');
+            const cFaible  = document.getElementById('stock-faible-count');
+            const bEpuise  = document.getElementById('stock-epuise-badge');
+            const cEpuise  = document.getElementById('stock-epuise-count');
+            if (bFaible && cFaible) {
+                if (data.faible > 0) {
+                    cFaible.textContent = data.faible;
+                    bFaible.classList.remove('hidden');
+                    bFaible.classList.add('inline-flex');
+                } else {
+                    bFaible.classList.add('hidden');
+                    bFaible.classList.remove('inline-flex');
+                }
+            }
+            if (bEpuise && cEpuise) {
+                if (data.epuise > 0) {
+                    cEpuise.textContent = data.epuise;
+                    bEpuise.classList.remove('hidden');
+                    bEpuise.classList.add('inline-flex');
+                } else {
+                    bEpuise.classList.add('hidden');
+                    bEpuise.classList.remove('inline-flex');
+                }
+            }
+        }).catch(() => {});
+}
+
+/* ── Afficher une notification flottante ── */
+function afficherNotifSalle(icone, titre, message, couleur) {
+    const container = document.getElementById('salle-notif-container');
+    if (!container) return;
+
+    const notif = document.createElement('div');
+    notif.className = 'pointer-events-auto flex items-start gap-3 bg-white border-l-4 rounded-xl shadow-xl px-4 py-3 transition-all duration-500 opacity-0 translate-x-8';
+    notif.style.borderColor = couleur;
+    notif.innerHTML = `
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style="background:${couleur}20">
+            <i class="fas ${icone} text-sm" style="color:${couleur}"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">${titre}</p>
+            <p class="text-sm font-bold text-gray-800 truncate mt-0.5">${message}</p>
+        </div>
+    `;
+    container.appendChild(notif);
+
+    // Entrée animée
+    requestAnimationFrame(() => {
+        notif.classList.remove('opacity-0', 'translate-x-8');
+        notif.classList.add('opacity-100', 'translate-x-0');
+    });
+
+    // Sortie après 5 secondes
+    setTimeout(() => {
+        notif.classList.remove('opacity-100', 'translate-x-0');
+        notif.classList.add('opacity-0', 'translate-x-8');
+        setTimeout(() => notif.remove(), 500);
+    }, 5000);
+}
+
+/* ── Notifications : enregistrées immédiatement, pas dans livewire:load ── */
+// Éviter les doublons si Livewire re-rend le composant
+if (!window._sysmedNotifInit) {
+    window._sysmedNotifInit = true;
+
+    window.addEventListener('nouveau-rdv-notif', e => {
+        const d = e.detail;
+        const msg = d.heure ? `${d.nom} — ${d.heure}` : d.nom;
+        afficherNotifSalle('fa-calendar-check', 'Nouveau rendez-vous', msg, '#2563eb');
+        rafraichirCompteurSalleAttente();
+    });
+
+    window.addEventListener('nouvelle-consultation-notif', e => {
+        afficherNotifSalle('fa-stethoscope', 'Consultation enregistrée', e.detail.nom, '#16a34a');
+        rafraichirCompteurSalleAttente();
+    });
+
+    window.addEventListener('nouvelle-ordonnance-interne-notif', e => {
+        const d = e.detail;
+        afficherNotifSalle('fa-syringe', 'Soin à effectuer', d.nom, 'var(--color-primary)');
+        rafraichirCompteurSalleSoins();
+    });
+}
+
+/* ── Compteurs polling ── */
+if (!window._sysmedPollingInit) {
+    window._sysmedPollingInit = true;
+    rafraichirCompteurSalleAttente();
+    rafraichirCompteurSalleSoins();
+    rafraichirStockAlerts();
+    setInterval(rafraichirCompteurSalleAttente, 15000);
+    setInterval(rafraichirCompteurSalleSoins, 15000);
+    setInterval(rafraichirStockAlerts, 60000);
+}
+
+document.addEventListener('livewire:load', function () {
+
+    // Active state for patient sub-menu buttons
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.patient-nav-button');
+        if (btn) {
+            document.querySelectorAll('.patient-nav-button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+    });
+
+    // Modal loading indicator
+    window.addEventListener('modal-loading', function(e) {
+        const loadingDiv = document.getElementById('modal-loading');
+        if (!loadingDiv) return;
+        if (e.detail.loading) {
+            loadingDiv.classList.remove('hidden');
+        } else {
+            loadingDiv.classList.add('hidden');
+        }
+    });
+
+    // Keyboard shortcuts (when modal is open)
+    document.addEventListener('keydown', function(e) {
+        if (!document.querySelector('.modal-overlay')) return;
+        if (e.key === 'Escape') {
+            const closeBtn = document.querySelector('button[wire\\:click*="fermer"], button[wire\\:click*="close"], button[wire\\:click*="Close"]');
+            if (closeBtn) closeBtn.click();
+        }
+        if (e.ctrlKey && e.key === 'Enter') {
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.click();
+        }
+    });
+});
+</script>
+
+</div>{{-- fin div racine --}}
