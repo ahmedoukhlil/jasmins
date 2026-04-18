@@ -493,11 +493,11 @@ class AccueilPatient extends Component
         $this->showGestionPatientsModal = false;
     }
 
-    public function openNouveauPatientModal()
+    public function openNouveauPatientModal($data = [])
     {
         $this->showNouveauPatientModal = true;
         // Émettre un événement Livewire pour ouvrir le modal de création dans PatientManager
-        $this->emit('openPatientCreateModal');
+        $this->emit('openPatientCreateModal', $data);
     }
 
     public function closeNouveauPatientModal()

@@ -37,7 +37,8 @@ class PatientSearch extends Component
     public function ouvrirCreationSiIntrouvable()
     {
         if ($this->showResults && count($this->patients) === 0 && strlen(trim($this->search)) >= 3) {
-            $this->emit('openNouveauPatientModal');
+            $telephone = $this->searchBy === 'telephone' ? trim($this->search) : '';
+            $this->emit('openNouveauPatientModal', ['telephone' => $telephone]);
             $this->search = '';
             $this->showResults = false;
         }

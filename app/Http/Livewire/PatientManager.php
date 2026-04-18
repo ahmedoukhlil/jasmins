@@ -186,12 +186,15 @@ class PatientManager extends Component
         $this->showModal = true;
     }
 
-    public function openModal()
+    public function openModal($data = [])
     {
         $this->resetForm();
         if (!$this->patientId) {
             $dernierIdentifiant = Patient::max('IdentifiantPatient') ?? 0;
             $this->identifiantPatient = $dernierIdentifiant + 1;
+        }
+        if (!empty($data['telephone'])) {
+            $this->telephone1 = $data['telephone'];
         }
         $this->showModal = true;
     }
