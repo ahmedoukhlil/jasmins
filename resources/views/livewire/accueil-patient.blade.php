@@ -1,4 +1,5 @@
 <div class="w-full px-3 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto mt-4 md:mt-8">
+@php $u = Auth::user(); @endphp
 
     {{-- Bannière de bienvenue --}}
     <div class="mb-6 p-4 md:p-6 rounded-xl bg-primary text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
@@ -23,9 +24,12 @@
             <livewire:patient-search />
         </div>
         <div class="flex flex-wrap gap-2 lg:w-auto">
+            @if($u->hasPermission('patient.view'))
             <button wire:click="openGestionPatientsModal" class="btn-secondary text-sm">
                 <i class="fas fa-users"></i> Liste patients
             </button>
+            @endif
+            @if($u->hasPermission('rendez-vous.view'))
             <button wire:click="showCreateRdv" class="btn-secondary text-sm relative">
                 <i class="fas fa-calendar-plus"></i> Gestion RDV
                 @if($rdvARappelerCount > 0)
@@ -34,6 +38,7 @@
                     </span>
                 @endif
             </button>
+            @endif
         </div>
     </div>
 
