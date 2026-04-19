@@ -2,37 +2,37 @@
 @php $u = Auth::user(); @endphp
 
     {{-- Bannière de bienvenue --}}
-    <div class="mb-6 p-4 md:p-6 rounded-xl bg-primary text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="text-center md:text-left">
+    <div class="mb-4 md:mb-6 p-4 md:p-6 rounded-xl bg-primary text-white shadow-lg flex items-center justify-between gap-4">
+        <div>
             @php
                 $nomCab = Auth::user()->cabinet->NomCabinet ?? null;
                 $excluded = ['Cabinet Savwa', 'Cabinet Medical Savwa', 'Cabinet savwa', 'SysMedical'];
                 if (!$nomCab || in_array($nomCab, $excluded)) $nomCab = 'SysMedical';
             @endphp
-            <h1 class="text-2xl md:text-3xl font-bold mb-1">{{ $nomCab }}</h1>
-            <p class="text-white/80 text-sm md:text-base">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-0.5 leading-tight">{{ $nomCab }}</h1>
+            <p class="text-white/80 text-xs sm:text-sm md:text-base">
                 {{ is_array(Auth::user()->typeuser) ? (Auth::user()->typeuser['Libelle'] ?? '') : (is_object(Auth::user()->typeuser) ? Auth::user()->typeuser->Libelle : Auth::user()->typeuser) }}
-                <span class="font-bold">{{ Auth::user()->NomComplet ?? Auth::user()->name ?? '' }}</span>
+                — <span class="font-bold">{{ Auth::user()->NomComplet ?? Auth::user()->name ?? '' }}</span>
             </p>
         </div>
-        <i class="fas fa-staff-snake text-5xl opacity-20"></i>
+        <i class="fas fa-staff-snake text-4xl md:text-5xl opacity-20 flex-shrink-0"></i>
     </div>
 
     {{-- Recherche patient + actions rapides --}}
     @if($u->hasPermission('patient.view'))
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 flex flex-col lg:flex-row items-stretch lg:items-center gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 md:p-5 flex flex-col lg:flex-row items-stretch lg:items-center gap-3 mb-4 md:mb-6">
         <div class="w-full lg:flex-1">
             <livewire:patient-search />
         </div>
-        <div class="flex flex-wrap gap-2 lg:w-auto">
+        <div class="flex gap-2">
             @if($u->hasPermission('patient.view'))
-            <button wire:click="openGestionPatientsModal" class="btn-secondary text-sm">
-                <i class="fas fa-users"></i> Liste patients
+            <button wire:click="openGestionPatientsModal" class="btn-secondary text-sm flex-1 lg:flex-none justify-center">
+                <i class="fas fa-users"></i> <span class="sm:inline">Liste patients</span>
             </button>
             @endif
             @if($u->hasPermission('rendez-vous.view'))
-            <button wire:click="showCreateRdv" class="btn-secondary text-sm relative">
-                <i class="fas fa-calendar-plus"></i> Gestion RDV
+            <button wire:click="showCreateRdv" class="btn-secondary text-sm flex-1 lg:flex-none justify-center relative">
+                <i class="fas fa-calendar-plus"></i> <span class="sm:inline">Gestion RDV</span>
                 @if($rdvARappelerCount > 0)
                     <span class="absolute -top-2 -right-2 inline-flex items-center justify-center min-w-[1.2rem] h-5 px-1 rounded-full bg-red-500 text-white text-xs font-bold shadow">
                         <i class="fas fa-bell text-xs mr-0.5"></i>{{ $rdvARappelerCount }}
@@ -45,13 +45,13 @@
     @endif
 
     {{-- Barre de navigation principale --}}
-    <div class="flex flex-wrap gap-2 md:gap-3 mb-4 py-3 px-4 justify-center rounded-xl bg-white border border-gray-100 shadow-sm">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2 md:gap-2.5 mb-4 py-3 px-3 md:px-4 md:justify-center rounded-xl bg-white border border-gray-100 shadow-sm">
 
         {{-- Gestion du patient (visible si accès patient) --}}
         @if($u->hasPermission('patient.view'))
         <button wire:click="togglePatientMenu"
             @if(!$selectedPatient) disabled title="Sélectionnez un patient d'abord" @endif
-            class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]
+            class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 col-span-2 sm:col-span-1 md:min-w-[9.5rem] justify-center
                 {{ $showPatientMenu ? '!bg-primary !text-white !border-primary' : '' }}
                 {{ !$selectedPatient ? 'opacity-50 cursor-not-allowed' : '' }}">
             <i class="fas fa-user-friends"></i>
@@ -62,22 +62,22 @@
 
         {{-- Caisse Paie --}}
         @if($u->hasPermission('caisse-operations.view'))
-        <button wire:click="showCaisseOperations" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]">
-            <i class="fas fa-cash-register"></i> Caisse Paie
+        <button wire:click="showCaisseOperations" class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9.5rem] justify-center">
+            <i class="fas fa-cash-register"></i> <span>Caisse Paie</span>
         </button>
         @endif
 
         {{-- Dépenses --}}
         @if($u->hasPermission('depenses.view'))
-        <button wire:click="openDepenses" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]">
-            <i class="fas fa-receipt"></i> Dépenses
+        <button wire:click="openDepenses" class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9.5rem] justify-center">
+            <i class="fas fa-receipt"></i> <span>Dépenses</span>
         </button>
         @endif
 
         {{-- Statistiques --}}
         @if($u->hasPermission('statistiques.view'))
-        <button wire:click="showStatistiques" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]">
-            <i class="fas fa-chart-bar"></i> Statistiques
+        <button wire:click="showStatistiques" class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9.5rem] justify-center">
+            <i class="fas fa-chart-bar"></i> <span>Statistiques</span>
         </button>
         @endif
 
@@ -85,7 +85,7 @@
         @if($u->hasPermission('salle-attente.view'))
         <div class="relative">
             <button wire:click="ouvrirSalleAttente"
-                class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]
+                class="w-full nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9.5rem] justify-center
                     {{ $showSalleAttenteModal ? '!bg-primary !text-white !border-primary' : '' }}">
                 <i class="fas fa-couch"></i>
                 <span>Salle d'attente</span>
@@ -101,7 +101,7 @@
         @if($u->hasPermission('salle-soins.view'))
         <div class="relative">
             <button wire:click="ouvrirSalleSoins"
-                class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]
+                class="w-full nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9.5rem] justify-center
                     {{ $showSalleSoinsModal ? '!bg-primary !text-white !border-primary' : '' }}">
                 <i class="fas fa-syringe"></i>
                 <span>Salle de soins</span>
@@ -116,7 +116,7 @@
         {{-- Gestion du cabinet --}}
         @if($u->hasAnyPermission(['medecin.view','assureur.view','act.view','stock.view','pharmacie.view','user.view','cabinet.manage']))
         <button wire:click="toggleCabinetMenu"
-            class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[10rem]
+            class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9.5rem] justify-center
                 {{ $showCabinetMenu ? '!bg-primary !text-white !border-primary' : '' }}">
             <i class="fas fa-cogs"></i>
             <span>Gestion du cabinet</span>
@@ -128,45 +128,45 @@
     {{-- Sous-menu Gestion du patient --}}
     @if($selectedPatient && $showPatientMenu)
     <div class="patient-menu-container mb-4">
-        <div class="patient-submenu flex flex-wrap gap-2 md:gap-3 justify-center py-3 px-4 bg-blue-50/60 border border-primary/20 rounded-xl show" data-menu="patient">
+        <div class="patient-submenu grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2 md:gap-2.5 md:justify-center py-3 px-3 md:px-4 bg-blue-50/60 border border-primary/20 rounded-xl show" data-menu="patient">
 
             @if($u->hasPermission('consultation.view'))
-            <button wire:click="showConsultation" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+            <button wire:click="showConsultation" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-3 py-2.5 md:min-w-[9rem] border-2 rounded-xl text-xs sm:text-sm font-semibold justify-center">
                 <i class="fas fa-stethoscope"></i>
                 <span>Consultation</span>
             </button>
             @endif
 
             @if($u->hasPermission('facture.view') || $u->hasPermission('facture.view.own'))
-            <button wire:click="showReglement" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+            <button wire:click="showReglement" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-3 py-2.5 md:min-w-[9rem] border-2 rounded-xl text-xs sm:text-sm font-semibold justify-center">
                 <i class="fas fa-file-invoice-dollar"></i>
                 <span>Facture / Devis</span>
             </button>
             @endif
 
             @if($u->hasPermission('rendez-vous.view'))
-            <button wire:click="showRendezVous" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+            <button wire:click="showRendezVous" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-3 py-2.5 md:min-w-[9rem] border-2 rounded-xl text-xs sm:text-sm font-semibold justify-center">
                 <i class="fas fa-calendar-check"></i>
                 <span>Rendez-vous</span>
             </button>
             @endif
 
             @if($u->hasPermission('ordonnance.create'))
-            <button wire:click="ouvrirOrdonnanceModal" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+            <button wire:click="ouvrirOrdonnanceModal" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-3 py-2.5 md:min-w-[9rem] border-2 rounded-xl text-xs sm:text-sm font-semibold justify-center">
                 <i class="fas fa-file-prescription"></i>
                 <span>Ordonnances</span>
             </button>
             @endif
 
             @if($u->hasPermission('dossier.view'))
-            <button wire:click="showDossierMedical" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+            <button wire:click="showDossierMedical" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-3 py-2.5 md:min-w-[9rem] border-2 rounded-xl text-xs sm:text-sm font-semibold justify-center">
                 <i class="fas fa-folder-open"></i>
                 <span>Dossier médical</span>
             </button>
             @endif
 
             @if($u->hasPermission('consultation.create'))
-            <button wire:click="ouvrirActesPatientModal" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+            <button wire:click="ouvrirActesPatientModal" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-3 py-2.5 md:min-w-[9rem] border-2 rounded-xl text-xs sm:text-sm font-semibold justify-center">
                 <i class="fas fa-procedures"></i>
                 <span>Actes à effectuer</span>
             </button>
@@ -178,41 +178,41 @@
     {{-- Sous-menu Gestion du cabinet --}}
     @if($showCabinetMenu)
     <div class="mb-4">
-        <div class="flex flex-wrap gap-2 md:gap-3 justify-center py-3 px-4 bg-gray-50 border border-gray-200 rounded-xl" data-menu="cabinet">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2 md:gap-2.5 md:justify-center py-3 px-3 md:px-4 bg-gray-50 border border-gray-200 rounded-xl" data-menu="cabinet">
 
             @if($u->hasPermission('assureur.view'))
-            <button wire:click="ouvrirAssureurModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+            <button wire:click="ouvrirAssureurModal" class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9rem] justify-center">
                 <i class="fas fa-shield-alt"></i> Assurances
             </button>
             @endif
 
             @if($u->hasPermission('act.view'))
-            <button wire:click="ouvrirListeActesModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+            <button wire:click="ouvrirListeActesModal" class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9rem] justify-center">
                 <i class="fas fa-list-alt"></i> Actes / Soins
             </button>
             @endif
 
             @if($u->hasPermission('pharmacie.view'))
-            <button wire:click="ouvrirListeMedicamentsModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+            <button wire:click="ouvrirListeMedicamentsModal" class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9rem] justify-center">
                 <i class="fas fa-pills"></i> Médicaments
             </button>
             @endif
 
             @if($u->hasPermission('medecin.view'))
-            <button wire:click="ouvrirMedecinsModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+            <button wire:click="ouvrirMedecinsModal" class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9rem] justify-center">
                 <i class="fas fa-user-md"></i> Médecins
             </button>
             @endif
 
             @if($u->hasPermission('caisse-operations.view'))
-            <button wire:click="ouvrirTypePaiementModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+            <button wire:click="ouvrirTypePaiementModal" class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9rem] justify-center">
                 <i class="fas fa-credit-card"></i> Paiements
             </button>
             @endif
 
             @if($u->hasPermission('stock.view'))
-            <div class="relative inline-flex items-center gap-1">
-                <button wire:click="ouvrirDashboardStock" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+            <div class="relative">
+                <button wire:click="ouvrirDashboardStock" class="w-full nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9rem] justify-center">
                     <i class="fas fa-chart-line"></i> Suivi stock
                 </button>
                 {{-- Badge stock faible (orange) --}}
@@ -231,14 +231,14 @@
             @endif
 
             @if($u->hasPermission('user.view'))
-            <button wire:click="openUsersModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]">
+            <button wire:click="openUsersModal" class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9rem] justify-center">
                 <i class="fas fa-users-cog"></i> Utilisateurs
             </button>
             @endif
 
             @if($u->hasPermission('cabinet.manage'))
             <button wire:click="ouvrirParametresCabinet"
-                class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem]
+                class="nav-button btn-secondary text-xs sm:text-sm px-3 py-2.5 md:min-w-[9rem] justify-center
                     {{ $showParametresCabinetModal ? '!bg-primary !text-white !border-primary' : '' }}">
                 <i class="fas fa-sliders-h"></i> Paramètres
             </button>
