@@ -101,12 +101,27 @@ class UserManager extends Component
 
         $users = $query->orderBy('NomComplet')->paginate($this->perPage);
 
+        // Charger permissions en direct (évite la sérialisation Livewire qui transforme stdClass en array)
+        $allPerms = DB::table('permissions')->orderBy('groupe')->orderBy('ordre')->get();
+        $permissionsTab = [];
+        foreach ($allPerms as $p) {
+            $permissionsTab[$p->groupe][] = $p;
+        }
+
+        $assigned = DB::table('role_permissions')
+            ->join('permissions', 'role_permissions.permission_id', '=', 'permissions.id')
+            ->get(['role_permissions.role_id', 'permissions.id as perm_id']);
+        $rolePermissions = [];
+        foreach ($assigned as $row) {
+            $rolePermissions[$row->role_id][$row->perm_id] = true;
+        }
+
         return view('livewire.user-manager', [
             'users'          => $users,
-            'roles'          => $this->getRolesProperty(), // pour le <select> utilisateurs
-            'rolesList'      => $this->rolesList,          // pour l'onglet Rôles
-            'permissionsTab' => $this->permissionsTab,
-            'rolePermissions'=> $this->rolePermissions,
+            'roles'          => $this->getRolesProperty(),
+            'rolesList'      => DB::table('typeuser')->orderBy('IdClasseUser0')->get(),
+            'permissionsTab' => $permissionsTab,
+            'rolePermissions'=> $rolePermissions,
         ]);
     }
 
