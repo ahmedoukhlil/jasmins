@@ -30,7 +30,9 @@ class ActesPatient extends Component
 
     public function loadActes()
     {
-        $query = Acte::where('Masquer', 0)->orderBy('nordre');
+        $query = Acte::where('Masquer', 0)
+            ->where('Acte', 'not like', '%Consultation%')
+            ->orderBy('nordre');
         if (trim($this->search_acte) !== '') {
             $query->where('Acte', 'like', '%' . $this->search_acte . '%');
         }
