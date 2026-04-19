@@ -415,50 +415,36 @@
 
     <!-- Modal de sélection du médecin -->
     @if($showMedecinModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-                    <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-                </div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <!-- Header -->
-                    <div class="bg-primary text-white p-4 rounded-t-lg">
-                        <button wire:click="$set('showMedecinModal', false)" class="absolute top-4 right-4 text-white hover:text-red-200 text-2xl font-bold">&times;</button>
-                        <h2 class="text-2xl font-bold">Sélectionner un médecin</h2>
-                    </div>
-                    <!-- Contenu -->
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="mb-4">
-                            <input type="text" wire:model.debounce.300ms="searchMedecin" 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                                placeholder="Rechercher un médecin...">
-                        </div>
-                        <div class="max-h-96 overflow-y-auto">
-                            <div class="grid grid-cols-1 gap-2">
-                                @foreach($medecins as $medecin)
-                                <button wire:click="selectMedecin({{ $medecin->idMedecin }})"
-                                    class="text-left px-4 py-2 hover:bg-gray-100 rounded-md transition-colors duration-150">
-                                    <div class="font-medium">Dr. {{ $medecin->Nom }}</div>
-                                    @if($medecin->Contact)
-                                    <div class="text-sm text-gray-500">{{ $medecin->Contact }}</div>
-                                    @endif
-                                </button>
-                                @endforeach
-                                @if(count($medecins) === 0)
-                                    <div class="text-center py-4 text-gray-500">Aucun médecin trouvé</div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-lg">
-                        <button type="button" wire:click="$set('showMedecinModal', false)" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200">
-                            Annuler
-                        </button>
-                    </div>
+    <div class="modal-overlay" style="z-index:60">
+        <div class="modal-box sm:max-w-lg">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-md mr-2"></i>Sélectionner un médecin</h2>
+                <button type="button" wire:click="$set('showMedecinModal', false)" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" wire:model.debounce.300ms="searchMedecin"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                    placeholder="Rechercher un médecin...">
+                <div class="grid grid-cols-1 gap-1 max-h-72 overflow-y-auto">
+                    @foreach($medecins as $medecin)
+                    <button wire:click="selectMedecin({{ $medecin->idMedecin }})"
+                        class="text-left px-4 py-2.5 hover:bg-primary-light rounded-lg transition-colors">
+                        <div class="font-medium text-sm text-gray-800">Dr. {{ $medecin->Nom }}</div>
+                        @if($medecin->Contact)
+                        <div class="text-xs text-gray-500">{{ $medecin->Contact }}</div>
+                        @endif
+                    </button>
+                    @endforeach
+                    @if(count($medecins) === 0)
+                        <div class="text-center py-6 text-sm text-gray-400">Aucun médecin trouvé</div>
+                    @endif
                 </div>
             </div>
+            <div class="modal-footer">
+                <button type="button" wire:click="$set('showMedecinModal', false)" class="btn-secondary text-sm">Annuler</button>
+            </div>
         </div>
+    </div>
     @endif
 
     {{-- Modal Dossier Médical --}}

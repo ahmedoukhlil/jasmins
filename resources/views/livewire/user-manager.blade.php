@@ -267,13 +267,13 @@
 
     {{-- ═══════════════════ MODAL ÉDITION ═══════════════════ --}}
     @if($showModal)
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-            <div class="bg-primary text-white px-6 py-4 flex items-center justify-between">
-                <h3 class="text-lg font-bold">Modifier un utilisateur</h3>
-                <button wire:click="closeModal" class="text-white/70 hover:text-white text-2xl leading-none">&times;</button>
+    <div class="modal-overlay" style="z-index:60">
+        <div class="modal-box sm:max-w-lg">
+            <div class="modal-header">
+                <h3>Modifier un utilisateur</h3>
+                <button type="button" wire:click="closeModal" class="modal-close">&times;</button>
             </div>
-            <form wire:submit.prevent="save" class="p-6 space-y-4">
+            <form wire:submit.prevent="save" class="modal-body space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom Complet *</label>
                     <input type="text" wire:model.defer="nomComplet"
@@ -342,22 +342,22 @@
 
     {{-- ═══════════════════ MODAL SUPPRESSION ═══════════════════ --}}
     @if($showDeleteModal)
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-exclamation-triangle text-red-600"></i>
-                </div>
-                <h3 class="text-lg font-bold text-gray-800">Confirmer la suppression</h3>
+    <div class="modal-overlay" style="z-index:60">
+        <div class="modal-box sm:max-w-md">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle mr-2"></i>Confirmer la suppression</h3>
+                <button type="button" wire:click="$set('showDeleteModal', false)" class="modal-close">&times;</button>
             </div>
-            <p class="text-sm text-gray-600 mb-6">Êtes-vous sûr de vouloir désactiver cet utilisateur ?</p>
-            <div class="flex justify-end gap-3">
-                <button wire:click="$set('showDeleteModal', false)"
-                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Annuler</button>
-                <button wire:click="deleteUser"
-                        class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">
-                    <i class="fas fa-trash mr-1"></i> Supprimer
-                </button>
+            <div class="modal-body">
+                <p class="text-sm text-gray-600 mb-6">Êtes-vous sûr de vouloir désactiver cet utilisateur ?</p>
+                <div class="flex justify-end gap-3">
+                    <button wire:click="$set('showDeleteModal', false)"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Annuler</button>
+                    <button wire:click="deleteUser"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">
+                        <i class="fas fa-trash mr-1"></i> Supprimer
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -459,22 +459,22 @@
 
     {{-- Confirmation suppression rôle --}}
     @if($showRoleDeleteConfirm)
-    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-exclamation-triangle text-red-600"></i>
-                </div>
-                <h3 class="text-lg font-bold text-gray-800">Supprimer ce rôle ?</h3>
+    <div class="modal-overlay" style="z-index:60">
+        <div class="modal-box sm:max-w-sm">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle mr-2"></i>Supprimer ce rôle ?</h3>
+                <button type="button" wire:click="$set('showRoleDeleteConfirm', false)" class="modal-close">&times;</button>
             </div>
-            <p class="text-sm text-gray-600 mb-6">Cette action supprimera également toutes les permissions associées à ce rôle.</p>
-            <div class="flex justify-end gap-3">
-                <button wire:click="$set('showRoleDeleteConfirm', false)"
-                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Annuler</button>
-                <button wire:click="deleteRole"
-                        class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">
-                    <i class="fas fa-trash mr-1"></i> Confirmer
-                </button>
+            <div class="modal-body">
+                <p class="text-sm text-gray-600 mb-6">Cette action supprimera également toutes les permissions associées à ce rôle.</p>
+                <div class="flex justify-end gap-3">
+                    <button wire:click="$set('showRoleDeleteConfirm', false)"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Annuler</button>
+                    <button wire:click="deleteRole"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">
+                        <i class="fas fa-trash mr-1"></i> Confirmer
+                    </button>
+                </div>
             </div>
         </div>
     </div>
