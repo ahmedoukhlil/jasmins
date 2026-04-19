@@ -81,6 +81,23 @@
         </button>
     </div>
 
+    {{-- Bénéfice des ventes --}}
+    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between gap-4">
+        <div>
+            <dt class="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-1">
+                <i class="fas fa-chart-line mr-1"></i> Bénéfice des ventes encaissées
+            </dt>
+            <dd class="text-2xl font-bold text-indigo-800">
+                {{ number_format($stats['beneficeVentes'] ?? 0, 0, ',', ' ') }}
+                <span class="text-sm font-normal">MRU</span>
+            </dd>
+            <p class="text-xs text-indigo-500 mt-1">Prix de vente facturé − Prix d'achat (lots)</p>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-coins text-indigo-600 text-xl"></i>
+        </div>
+    </div>
+
     <p class="text-xs text-gray-400 text-center"><i class="fas fa-mouse-pointer mr-1"></i>Cliquez sur une carte pour voir les détails</p>
 
     {{-- Modal de détails --}}

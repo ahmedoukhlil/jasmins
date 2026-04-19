@@ -810,6 +810,22 @@ class PharmacieManager extends Component
             ->where('Masquer', 0)
             ->count();
 
+        // Bénéfice des ventes facturées et payées
+        // Sorties liées à une facture encaissée (estfacturer=1 ou TotReglPatient > 0)
+        $beneficeVentes = \DB::table('mouvements_stock as ms')
+            ->join('lots_medicaments as lm', 'ms.fkidLot', '=', 'lm.idLot')
+            ->join('stock_medicaments as sm', 'ms.fkidStock', '=', 'sm.idStock')
+            ->join('factures as f', 'ms.fkidFacture', '=', 'f.Idfacture')
+            ->where('sm.fkidCabinet', $cabinetId)
+            ->where('ms.typeMouvement', 'SORTIE')
+            ->whereNotNull('ms.fkidFacture')
+            ->where(function($q) {
+                $q->where('f.estfacturer', 1)
+                  ->orWhere('f.TotReglPatient', '>', 0);
+            })
+            ->selectRaw('SUM((ms.prixUnitaire - lm.prixAchatUnitaire) * ABS(ms.quantite)) as benefice')
+            ->value('benefice') ?? 0;
+
         return [
             'totalMedicaments' => $totalMedicaments,
             'medicamentsRupture' => $medicamentsRupture,
@@ -820,6 +836,7 @@ class PharmacieManager extends Component
             'sortiesCeMois' => $sortiesCeMois,
             'lotsExpires' => $lotsExpires,
             'lotsExpireBientot' => $lotsExpireBientot,
+            'beneficeVentes' => $beneficeVentes,
         ];
     }
 
