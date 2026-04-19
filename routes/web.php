@@ -56,10 +56,12 @@ Route::middleware(['auth'])->group(function () {
             ->where('Masquer', 0)
             ->whereColumn('quantiteStock', '<=', 'quantiteMin')
             ->where('quantiteStock', '>', 0)
+            ->whereHas('medicament', fn($q) => $q->where('fkidtype', 1))
             ->count();
         $epuise = \App\Models\StockMedicament::where('fkidCabinet', $user->fkidcabinet)
             ->where('Masquer', 0)
             ->where('quantiteStock', '<=', 0)
+            ->whereHas('medicament', fn($q) => $q->where('fkidtype', 1))
             ->count();
         return response()->json(['faible' => $faible, 'epuise' => $epuise]);
     })->name('api.stock.alerts');
