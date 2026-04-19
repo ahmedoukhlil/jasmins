@@ -182,7 +182,8 @@
         $palette  = ['purple','blue','green','orange','pink','teal','indigo','rose','amber','cyan'];
         $roleColors = [];
         foreach ($allRoles as $i => $r) {
-            $roleColors[$r->IdClasseUser0] = $palette[$i % count($palette)];
+            $rKey = is_array($r) ? $r['IdClasseUser0'] : $r->IdClasseUser0;
+            $roleColors[$rKey] = $palette[$i % count($palette)];
         }
         $colspan = $allRoles->count() + 1;
     @endphp
@@ -205,10 +206,14 @@
                 <tr class="bg-gray-50 border-b border-gray-200">
                     <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Permission</th>
                     @foreach($allRoles as $r)
-                    @php $col = $roleColors[$r->IdClasseUser0]; @endphp
+                    @php
+                        $rId2  = is_array($r) ? $r['IdClasseUser0'] : $r->IdClasseUser0;
+                        $rLib2 = is_array($r) ? $r['Libelle']       : $r->Libelle;
+                        $col   = $roleColors[$rId2];
+                    @endphp
                     <th class="px-4 py-3 text-center text-xs font-semibold uppercase w-28">
                         <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-{{ $col }}-100 text-{{ $col }}-800">
-                            {{ $r->Libelle }}
+                            {{ $rLib2 }}
                         </span>
                     </th>
                     @endforeach
@@ -222,20 +227,26 @@
                     </td>
                 </tr>
                 @foreach($perms as $perm)
+                @php
+                    $permId    = is_array($perm) ? $perm['id']    : $perm->id;
+                    $permLabel = is_array($perm) ? $perm['label'] : $perm->label;
+                    $permName  = is_array($perm) ? $perm['name']  : $perm->name;
+                @endphp
                 <tr class="border-b border-gray-100 hover:bg-blue-50/40 transition-colors">
                     <td class="px-5 py-2.5">
-                        <span class="font-medium text-gray-800">{{ $perm->label }}</span>
-                        <code class="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{{ $perm->name }}</code>
+                        <span class="font-medium text-gray-800">{{ $permLabel }}</span>
+                        <code class="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{{ $permName }}</code>
                     </td>
                     @foreach($allRoles as $r)
                     @php
-                        $rId    = $r->IdClasseUser0;
-                        $col    = $roleColors[$rId];
-                        $checked = !empty($rolePermissions[$rId][$perm->id]);
+                        $rId     = is_array($r) ? $r['IdClasseUser0'] : $r->IdClasseUser0;
+                        $rLibell = is_array($r) ? $r['Libelle']       : $r->Libelle;
+                        $col     = $roleColors[$rId];
+                        $checked = !empty($rolePermissions[$rId][$permId]);
                     @endphp
                     <td class="px-4 py-2.5 text-center">
-                        <button wire:click="togglePermission({{ $rId }}, {{ $perm->id }})"
-                                title="{{ $checked ? 'Retirer' : 'Accorder' }} — {{ $r->Libelle }}"
+                        <button wire:click="togglePermission({{ $rId }}, {{ $permId }})"
+                                title="{{ $checked ? 'Retirer' : 'Accorder' }} — {{ $rLibell }}"
                                 class="w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all border-2
                                        {{ $checked
                                             ? 'bg-'.$col.'-100 border-'.$col.'-400 text-'.$col.'-700 hover:bg-'.$col.'-200'
@@ -379,14 +390,16 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($rolesList as $role)
                 @php
-                    $nbUsers = \App\Models\TUser::where('IdClasseUser', $role->IdClasseUser0)->where('ismasquer', 0)->count();
-                    $isSystem = in_array($role->IdClasseUser0, [1, 2, 3]);
+                    $rId      = is_array($role) ? $role['IdClasseUser0'] : $role->IdClasseUser0;
+                    $rLibelle = is_array($role) ? $role['Libelle']       : $role->Libelle;
+                    $nbUsers  = \App\Models\TUser::where('IdClasseUser', $rId)->where('ismasquer', 0)->count();
+                    $isSystem = in_array($rId, [1, 2, 3]);
                 @endphp
                 <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-4 py-3 text-gray-400 font-mono text-xs">{{ $role->IdClasseUser0 }}</td>
+                    <td class="px-4 py-3 text-gray-400 font-mono text-xs">{{ $rId }}</td>
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-2">
-                            <span class="font-medium text-gray-800">{{ $role->Libelle }}</span>
+                            <span class="font-medium text-gray-800">{{ $rLibelle }}</span>
                             @if($isSystem)
                                 <span class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">Système</span>
                             @endif
@@ -399,12 +412,12 @@
                     </td>
                     <td class="px-4 py-3">
                         <div class="flex justify-end gap-2">
-                            <button wire:click="editRole({{ $role->IdClasseUser0 }})"
+                            <button wire:click="editRole({{ $rId }})"
                                     class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100 flex items-center gap-1">
                                 <i class="fas fa-edit"></i> Modifier
                             </button>
                             @if(!$isSystem)
-                            <button wire:click="confirmDeleteRole({{ $role->IdClasseUser0 }})"
+                            <button wire:click="confirmDeleteRole({{ $rId }})"
                                     class="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs font-medium hover:bg-red-100 flex items-center gap-1">
                                 <i class="fas fa-trash"></i> Supprimer
                             </button>
