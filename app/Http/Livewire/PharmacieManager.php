@@ -815,7 +815,7 @@ class PharmacieManager extends Component
         $beneficeVentes = \DB::table('mouvements_stock as ms')
             ->join('lots_medicaments as lm', 'ms.fkidLot', '=', 'lm.idLot')
             ->join('stock_medicaments as sm', 'ms.fkidStock', '=', 'sm.idStock')
-            ->join('factures as f', 'ms.fkidFacture', '=', 'f.Idfacture')
+            ->join('facture as f', 'ms.fkidFacture', '=', 'f.Idfacture')
             ->where('sm.fkidCabinet', $cabinetId)
             ->where('ms.typeMouvement', 'SORTIE')
             ->whereNotNull('ms.fkidFacture')
