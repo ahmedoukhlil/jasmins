@@ -26,7 +26,7 @@
                     <div wire:click="ajouterLigne({{ $acte['ID'] }})"
                          class="flex items-center justify-between px-3 py-2 hover:bg-primary-light cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors">
                         <span class="text-sm font-medium text-gray-800">{{ $acte['Acte'] }}</span>
-                        <span class="text-xs text-primary font-semibold">{{ number_format($acte['PrixRef'], 0) }} MRU</span>
+                        <i class="fas fa-plus text-primary text-xs"></i>
                     </div>
                 @empty
                     <div class="px-3 py-4 text-sm text-gray-400 text-center">
@@ -47,11 +47,8 @@
                                wire:model.live="lignes.{{ $i }}.quantite"
                                min="1"
                                class="w-14 border border-gray-300 rounded px-1 py-0.5 text-sm text-center">
-                        <span class="text-xs text-gray-500 w-20 text-right">
-                            {{ number_format(floatval($ligne['prix']) * intval($ligne['quantite']), 0) }} MRU
-                        </span>
                         <button wire:click="supprimerLigne({{ $i }})"
-                                class="text-red-400 hover:text-red-600 transition-colors">
+                                class="text-red-400 hover:text-red-600 transition-colors ml-1">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -64,37 +61,6 @@
                     </div>
                 @endforelse
             </div>
-
-            @if(count($lignes) > 0)
-                <div class="mt-2 text-right text-sm font-bold text-primary">
-                    Total : {{ number_format($total, 0) }} MRU
-                </div>
-            @endif
-        </div>
-    </div>
-
-    {{-- Médecin + Mode de paiement --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Médecin <span class="text-red-500">*</span></label>
-            <select wire:model="medecin_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-primary">
-                <option value="">Sélectionner...</option>
-                @foreach($medecins as $med)
-                    <option value="{{ $med->fkidmedecin }}">Dr. {{ $med->NomComplet }}</option>
-                @endforeach
-            </select>
-            @error('medecin_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-        </div>
-
-        <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Mode de paiement <span class="text-red-500">*</span></label>
-            <select wire:model="mode_paiement" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-primary">
-                <option value="">Sélectionner...</option>
-                @foreach($typesPaiement as $type)
-                    <option value="{{ $type->LibPaie }}">{{ $type->LibPaie }}</option>
-                @endforeach
-            </select>
-            @error('mode_paiement') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
     </div>
 
@@ -107,7 +73,7 @@
                 @if(count($lignes) === 0) disabled @endif
                 class="btn-primary px-6 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
             <span wire:loading.remove wire:target="save">
-                <i class="fas fa-check mr-1"></i> Enregistrer et facturer
+                <i class="fas fa-check mr-1"></i> Prescrire les actes
             </span>
             <span wire:loading wire:target="save">
                 <i class="fas fa-spinner fa-spin mr-1"></i> Enregistrement...
