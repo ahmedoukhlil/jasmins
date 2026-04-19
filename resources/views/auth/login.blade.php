@@ -1,99 +1,255 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Connexion - SysMedical</title>
+    <title>Connexion — SysMedical</title>
     <link rel="stylesheet" href="/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f5f7ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 8px 40px rgba(30, 58, 138, 0.10);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: var(--color-primary, #1e3a8a);
+            padding: 36px 32px 28px;
+            text-align: center;
+        }
+
+        .login-header img {
+            height: 72px;
+            width: 72px;
+            object-fit: contain;
+            background: #fff;
+            border-radius: 16px;
+            padding: 8px;
+            margin: 0 auto 14px;
+            display: block;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+        }
+
+        .login-header h1 {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin: 0 0 4px;
+        }
+
+        .login-header p {
+            color: rgba(255,255,255,0.70);
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .login-body {
+            padding: 32px 32px 28px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .field-wrap {
+            position: relative;
+            margin-bottom: 18px;
+        }
+
+        .field-wrap i {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 13px;
+            pointer-events: none;
+        }
+
+        .field-wrap input {
+            width: 100%;
+            padding: 11px 14px 11px 38px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #111827;
+            background: #f9fafb;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .field-wrap input:focus {
+            border-color: var(--color-primary, #1e3a8a);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.08);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #9ca3af;
+            font-size: 13px;
+            pointer-events: all;
+        }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 22px;
+        }
+
+        .remember-row input[type="checkbox"] {
+            accent-color: var(--color-primary, #1e3a8a);
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+        }
+
+        .remember-row label {
+            font-size: 12px;
+            color: #6b7280;
+            cursor: pointer;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: var(--color-primary, #1e3a8a);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+
+        .error-box {
+            background: #fef2f2;
+            border-left: 3px solid #ef4444;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #dc2626;
+        }
+
+        .login-footer {
+            text-align: center;
+            padding: 0 0 24px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
-    <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full">
+<body>
+    <div class="login-card">
 
-            <!-- Carte de connexion -->
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="login-header">
+            <img src="/SysMedical.png" alt="SysMedical">
+            <h1>SysMedical</h1>
+            <p>Votre cabinet digitalisé</p>
+        </div>
 
-                <!-- En-tête avec logo -->
-                <div class="px-8 py-8 text-center" style="background-color: var(--color-primary, #1e3a8a);">
-                    <img src="/SysMedical.png" alt="SysMedical" style="height: 140px; width: 140px; display: block; margin: 0 auto; object-fit: contain; background: white; border-radius: 12px; padding: 8px;">
-                    <p class="mt-4 text-sm" style="color: rgba(255,255,255,0.9); font-weight: 500; letter-spacing: 0.5px;">Votre cabinet digitalisé</p>
+        <div class="login-body">
+
+            @if($errors->any())
+                <div class="error-box">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+
+                <label class="field-label" for="login">Identifiant</label>
+                <div class="field-wrap">
+                    <i class="fas fa-user"></i>
+                    <input id="login" type="text" name="login"
+                           value="{{ old('login') }}"
+                           placeholder="Votre identifiant"
+                           required autofocus autocomplete="username">
                 </div>
 
-                <div class="px-8 py-8">
-                <p class="text-center text-sm text-gray-500 mb-6">Connectez-vous à votre compte</p>
-                @if($errors->any())
-                    <div class="mb-6 bg-primary-light border-l-4 border-primary p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-exclamation-circle text-primary"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-primary">
-                                    {{ $errors->first() }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+                <label class="field-label" for="password">Mot de passe</label>
+                <div class="field-wrap">
+                    <i class="fas fa-lock"></i>
+                    <input id="password" type="password" name="password"
+                           placeholder="Votre mot de passe"
+                           required autocomplete="current-password">
+                    <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
+                </div>
 
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
-                    @csrf
-                    
-                    <!-- Champ Identifiant -->
-                    <div>
-                        <label for="login" class="block text-sm font-medium text-gray-700 mb-1">Identifiant</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-user text-gray-400"></i>
-                            </div>
-                            <input id="login" type="text" name="login" value="{{ old('login') }}" required autofocus
-                                class="pl-10 w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                placeholder="Entrez votre identifiant">
-                        </div>
-                    </div>
+                <div class="remember-row">
+                    <input id="remember" type="checkbox" name="remember">
+                    <label for="remember">Se souvenir de moi</label>
+                </div>
 
-                    <!-- Champ Mot de passe -->
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-lock text-gray-400"></i>
-                            </div>
-                            <input id="password" type="password" name="password" required
-                                class="pl-10 w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                placeholder="Entrez votre mot de passe">
-                        </div>
-                    </div>
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Se connecter
+                </button>
+            </form>
+        </div>
 
-                    <!-- Options de connexion -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <input id="remember" type="checkbox" name="remember"
-                                class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
-                            <label for="remember" class="ml-2 block text-sm text-gray-700">
-                                Se souvenir de moi
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Bouton de connexion -->
-                    <button type="submit"
-                        class="w-full flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        <i class="fas fa-sign-in-alt mr-2"></i>
-                        Se connecter
-                    </button>
-                </form>
-                </div>{{-- fin px-8 py-8 --}}
-            </div>
-
-            <!-- Footer -->
-            <div class="text-center mt-8">
-                <p class="text-sm text-gray-600">
-                    &copy; {{ date('Y') }} SysMedical. Tous droits réservés.
-                </p>
-            </div>
+        <div class="login-footer">
+            &copy; {{ date('Y') }} SysMedical — Tous droits réservés
         </div>
     </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon  = document.querySelector('.toggle-password');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>
