@@ -161,15 +161,6 @@
                                             <button wire:click.stop="ouvrirReglementFacture({{ $facture->Idfacture }})" class="btn-primary text-xs">
                                                 <i class="fas fa-money-bill-wave"></i> Payer
                                             </button>
-                                            <button wire:click.stop="openAddActeForm({{ $facture->Idfacture }})" class="btn-secondary text-xs">
-                                                <i class="fas fa-plus"></i> Ajouter un acte
-                                            </button>
-                                            <button wire:click.stop="openAddMedicamentForm({{ $facture->Idfacture }}, 1)" class="btn-secondary text-xs">
-                                                <i class="fas fa-pills"></i> Médicament
-                                            </button>
-                                            <button wire:click.stop="openAddMedicamentForm({{ $facture->Idfacture }}, 2)" class="btn-secondary text-xs">
-                                                <i class="fas fa-microscope"></i> Analyse / Radio
-                                            </button>
                                             <a href="{{ route('consultations.facture-patient', $facture->Idfacture) }}" target="_blank"
                                                class="btn-secondary text-xs !border-gray-400 !text-gray-700 hover:!bg-gray-700 hover:!text-white">
                                                 <i class="fas fa-print"></i> Imprimer
