@@ -662,8 +662,7 @@ class AccueilPatient extends Component
         $this->showReglement = false;
         $this->showRendezVous = false;
         $this->showPatientMenu = false;
-        $this->showCabinetMenu = false;
-        
+
         // Ouvrir le modal statistiques
         $this->showStatistiques = true;
         
@@ -715,8 +714,7 @@ class AccueilPatient extends Component
         $this->showReglement = false;
         $this->showRendezVous = false;
         $this->showPatientMenu = false;
-        $this->showCabinetMenu = false;
-        
+
         // Ouvrir le modal dashboard stock
         $this->showDashboardStock = true;
         
