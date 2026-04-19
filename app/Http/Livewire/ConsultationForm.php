@@ -471,7 +471,7 @@ class ConsultationForm extends Component
             $fkidEtsAssurance = $patient->Assureur;
             // Si le taux PEC n'est pas dans selectedPatient, le récupérer depuis l'assureur
             if ($txpec == 0 && $patient->assureur) {
-                $txpec = floatval($patient->assureur->TauxdePEC ?? 0);
+                $txpec = floatval($patient->assureur->TauxdePEC ?? 0) / 100;
             }
         } elseif (isset($this->selectedPatient['Assureur']) && $this->selectedPatient['Assureur'] > 0) {
             $fkidEtsAssurance = $this->selectedPatient['Assureur'];
@@ -661,7 +661,7 @@ class ConsultationForm extends Component
                     if ($patient && $patient->Assureur) {
                         $assureur = Assureur::find($patient->Assureur);
                         if ($assureur) {
-                            $this->tauxPEC = floatval($assureur->TauxdePEC);
+                            $this->tauxPEC = floatval($assureur->TauxdePEC) / 100;
                             $this->montantAssurance = ($this->montant * $this->tauxPEC);
                             $this->montantPatient = ($this->montant * (1 - $this->tauxPEC));
                             $this->nomAssureur = $assureur->LibAssurance;

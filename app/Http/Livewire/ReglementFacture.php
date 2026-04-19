@@ -895,7 +895,7 @@ class ReglementFacture extends Component
                     $fkidEtsAssurance = $patient->Assureur;
                     $istp = 1;
                     $assureur = Assureur::find($patient->Assureur);
-                    $txpec = $assureur ? floatval($assureur->TauxdePEC) : floatval($this->selectedPatient['TauxPEC'] ?? 0);
+                    $txpec = $assureur ? floatval($assureur->TauxdePEC) / 100 : floatval($this->selectedPatient['TauxPEC'] ?? 0) / 100;
                 } elseif (isset($this->selectedPatient['Assureur']) && intval($this->selectedPatient['Assureur']) > 0) {
                     $fkidEtsAssurance = $this->selectedPatient['Assureur'];
                     $istp = 1;

@@ -47,7 +47,7 @@
                 @forelse($assureurs as $assureur)
                 <tr>
                     <td>{{ $assureur->LibAssurance }}</td>
-                    <td>{{ is_numeric($assureur->TauxdePEC) ? number_format($assureur->TauxdePEC * 100, 2).' %' : '-' }}</td>
+                    <td>{{ is_numeric($assureur->TauxdePEC) ? number_format($assureur->TauxdePEC, 2).' %' : '-' }}</td>
                     <td>
                         <button wire:click="openModal({{ $assureur->IDAssureur ?? $assureur->ID }})" class="text-primary hover:text-primary-dark text-sm font-medium mr-3">
                             <i class="fas fa-edit"></i> Modifier

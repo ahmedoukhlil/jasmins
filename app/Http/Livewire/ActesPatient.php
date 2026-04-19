@@ -108,7 +108,7 @@ class ActesPatient extends Component
                 $fkidEtsAssurance = null;
                 if ($patient && $patient->Assureur) {
                     $fkidEtsAssurance = $patient->Assureur;
-                    $txpec = floatval($patient->assureur->TauxdePEC ?? 0);
+                    $txpec = floatval($patient->assureur->TauxdePEC ?? 0) / 100;
                 }
 
                 $totalPEC     = $this->total * $txpec;
