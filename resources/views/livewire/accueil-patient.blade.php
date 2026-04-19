@@ -19,6 +19,7 @@
     </div>
 
     {{-- Recherche patient + actions rapides --}}
+    @if($u->hasPermission('patient.view'))
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 flex flex-col lg:flex-row items-stretch lg:items-center gap-4 mb-6">
         <div class="w-full lg:flex-1">
             <livewire:patient-search />
@@ -41,8 +42,7 @@
             @endif
         </div>
     </div>
-
-    @php $u = Auth::user(); @endphp
+    @endif
 
     {{-- Barre de navigation principale --}}
     <div class="flex flex-wrap gap-2 md:gap-3 mb-4 py-3 px-4 justify-center rounded-xl bg-white border border-gray-100 shadow-sm">
