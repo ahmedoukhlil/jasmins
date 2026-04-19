@@ -54,6 +54,7 @@ class AccueilPatient extends Component
     public $showSalleAttenteModal = false;
     public $showSalleSoinsModal = false;
     public $showParametresCabinetModal = false;
+    public $showActesPatientModal = false;
 
     // NOUVELLES PROPRIÉTÉS pour les sous-sections patient - Même logique que les sections principales
     public $showConsultation = false;
@@ -761,6 +762,19 @@ class AccueilPatient extends Component
     public function fermerParametresCabinet()
     {
         $this->showParametresCabinetModal = false;
+    }
+
+    public function ouvrirActesPatientModal()
+    {
+        if (!$this->selectedPatient) return;
+        $this->closeAllSections();
+        $this->showActesPatientModal = true;
+        $this->showPatientMenu = true;
+    }
+
+    public function fermerActesPatientModal()
+    {
+        $this->showActesPatientModal = false;
     }
 
     public function ouvrirDepuisSalleAttente($patientData)
