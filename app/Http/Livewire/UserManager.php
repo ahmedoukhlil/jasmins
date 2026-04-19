@@ -18,6 +18,7 @@ class UserManager extends Component
     public $password;
     public $nomComplet;
     public $role;
+    public $fkidmedecin = '';
     public $isActive = true;
     public $isMasquer = false;
 
@@ -135,6 +136,7 @@ class UserManager extends Component
                 $this->login = $user->login;
                 $this->nomComplet = $user->NomComplet;
                 $this->role = $user->IdClasseUser;
+                $this->fkidmedecin = $user->fkidmedecin ?? '';
                 $this->isActive = !$user->ismasquer;
                 $this->isMasquer = $user->ismasquer;
             }
@@ -155,6 +157,7 @@ class UserManager extends Component
         $this->password = '';
         $this->nomComplet = '';
         $this->role = '';
+        $this->fkidmedecin = '';
         $this->isActive = true;
         $this->isMasquer = false;
     }
@@ -169,17 +172,12 @@ class UserManager extends Component
         $this->validate();
 
         try {
-            // Si c'est un médecin ou un propriétaire, on doit avoir un fkidmedecin
-            if ($this->role == 2 || $this->role == 3) {
-                // Récupérer le premier médecin disponible
-                $medecin = \App\Models\Medecin::first();
-                if (!$medecin) {
-                    session()->flash('error', 'Aucun médecin trouvé dans la base de données.');
-                    return;
-                }
-                $fkidmedecin = $medecin->idMedecin;
-            } else {
-                $fkidmedecin = 1; // Valeur par défaut pour les secrétaires
+            $fkidmedecin = $this->fkidmedecin ?: null;
+
+            // Pour médecin/propriétaire, un médecin lié est obligatoire
+            if (in_array($this->role, [2, 3]) && !$fkidmedecin) {
+                $this->addError('fkidmedecin', 'Veuillez sélectionner un médecin pour ce rôle.');
+                return;
             }
 
             $userData = [
@@ -189,7 +187,7 @@ class UserManager extends Component
                 'ismasquer' => !$this->isActive,
                 'fonction' => $this->role == 1 ? 'Secrétaire' : ($this->role == 2 ? 'Médecin' : 'Propriétaire'),
                 'fkidmedecin' => $fkidmedecin,
-                'fkidcabinet' => 1, // Cabinet par défaut
+                'fkidcabinet' => 1,
                 'DtCr' => now(),
             ];
 
