@@ -315,8 +315,8 @@
                     <select wire:model.defer="fkidmedecin"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
                         <option value="">— Sélectionner un médecin —</option>
-                        @foreach(\App\Models\Medecin::orderBy('NomMedecin')->get() as $med)
-                            <option value="{{ $med->idMedecin }}">{{ $med->NomMedecin }}</option>
+                        @foreach(\App\Models\Medecin::orderBy('Nom')->get() as $med)
+                            <option value="{{ $med->idMedecin }}">{{ $med->Nom }}</option>
                         @endforeach
                     </select>
                     @error('fkidmedecin') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
