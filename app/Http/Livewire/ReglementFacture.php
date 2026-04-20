@@ -79,24 +79,19 @@ class ReglementFacture extends Component
                 return null;
             }
             
-            // Utiliser un cache court (5 minutes) pour les factures car elles peuvent changer
-            $cacheKey = 'factures_patient_' . $patientId . '_page_' . $this->currentPage;
-            return Cache::remember($cacheKey, 300, function() use ($patientId) {
-                return Facture::where('IDPatient', $patientId)
-                    ->with([
-                        'medecin' => function($query) {
-                            $query->select('idMedecin', 'Nom');
-                        }
-                        // Ne pas charger les détails ici - ils seront chargés seulement quand une facture est sélectionnée
-                    ])
-                    ->select([
-                        'Idfacture', 'Nfacture', 'FkidMedecinInitiateur', 'DtFacture',
-                        'TotFacture', 'ISTP', 'TXPEC', 'TotalPEC', 'ReglementPEC',
-                        'TotalfactPatient', 'TotReglPatient'
-                    ])
-                    ->orderBy('DtFacture', 'desc')
-                    ->paginate(10, ['*'], 'page', $this->currentPage);
-            });
+            return Facture::where('IDPatient', $patientId)
+                ->with([
+                    'medecin' => function($query) {
+                        $query->select('idMedecin', 'Nom');
+                    }
+                ])
+                ->select([
+                    'Idfacture', 'Nfacture', 'FkidMedecinInitiateur', 'DtFacture',
+                    'TotFacture', 'ISTP', 'TXPEC', 'TotalPEC', 'ReglementPEC',
+                    'TotalfactPatient', 'TotReglPatient', 'estfacturer'
+                ])
+                ->orderBy('DtFacture', 'desc')
+                ->paginate(10, ['*'], 'page', $this->currentPage);
         }
         return null;
     }

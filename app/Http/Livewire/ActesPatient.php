@@ -11,6 +11,7 @@ use App\Models\Medecin;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class ActesPatient extends Component
 {
@@ -191,6 +192,12 @@ class ActesPatient extends Component
                     'TotalPEC'         => $nouveauTotal * $txpec,
                     'TotalfactPatient' => $nouveauTotal * (1 - $txpec),
                 ]);
+
+                // Vider le cache factures pour forcer le rechargement dans ReglementFacture
+                for ($page = 1; $page <= 5; $page++) {
+                    Cache::forget('factures_patient_' . $patientId . '_page_' . $page);
+                }
+                $this->factures = null;
 
                 $this->lignes      = [];
                 $this->total       = 0;
