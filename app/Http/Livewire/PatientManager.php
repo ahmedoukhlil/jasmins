@@ -312,9 +312,9 @@ class PatientManager extends Component
                 DB::table('facture')->where('IDPatient', $id)->delete();
 
                 // Supprimer les ordonnances et leurs détails
-                $ordIds = DB::table('ordonnanceref')->where('fkidpatient', $id)->pluck('idordonnance');
+                $ordIds = DB::table('ordonnanceref')->where('fkidpatient', $id)->pluck('id');
                 if ($ordIds->isNotEmpty()) {
-                    DB::table('detailordonnance')->whereIn('fkidordonnance', $ordIds)->delete();
+                    DB::table('ordonnance')->whereIn('fkidrefOrd', $ordIds)->delete();
                 }
                 DB::table('ordonnanceref')->where('fkidpatient', $id)->delete();
 
