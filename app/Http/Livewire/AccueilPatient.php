@@ -511,9 +511,7 @@ class AccueilPatient extends Component
     public function showCreateRdv()
     {
         $this->showCreateRdvModal = true;
-        // Précharger les données essentielles
-        $this->dispatchBrowserEvent('modal-loading', ['loading' => true]);
-        
+
         // Émettre un événement pour informer le composant CreateRendezVous du patient sélectionné
         if ($this->selectedPatient) {
             $this->emit('patientSelected', $this->selectedPatient);
