@@ -325,11 +325,11 @@ class PatientManager extends Component
                 DB::table('mouvements_stock')->where('fkidPatient', $id)->delete();
 
                 // Supprimer consultations et analyses
-                DB::table('consultations_medicales')->where('fkidPatient', $id)->delete();
+                DB::table('consultation_medicale')->where('fkidPatient', $id)->delete();
                 DB::table('analyses_patient')->where('fkidPatient', $id)->delete();
 
                 // Supprimer dossier médical
-                DB::table('dossiers_medicaux')->where('fkidPatient', $id)->delete();
+                DB::table('dossier_medical')->where('fkidPatient', $id)->delete();
 
                 // Supprimer le patient
                 Patient::destroy($id);
