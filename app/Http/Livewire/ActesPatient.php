@@ -111,25 +111,15 @@ class ActesPatient extends Component
                     $txpec = floatval($patient->assureur->TauxdePEC ?? 0) / 100;
                 }
 
-                // Chercher la facture non encaissée la plus récente du patient
+                // Chercher la facture non encore totalement encaissée la plus récente du patient
                 $facture = Facture::where('IDPatient', $patientId)
                     ->where('estfacturer', 0)
-                    ->where('TotReglPatient', 0)
                     ->where('fkidCabinet', $user->fkidcabinet)
                     ->orderBy('DtFacture', 'desc')
                     ->first();
 
                 if ($facture) {
-                    // Ajouter les actes à la facture existante et recalculer les totaux
-                    $nouveauTotal = $facture->TotFacture + $this->total;
-                    $totalPEC     = $nouveauTotal * $txpec;
-                    $totalPatient = $nouveauTotal * (1 - $txpec);
-
-                    $facture->update([
-                        'TotFacture'       => $nouveauTotal,
-                        'TotalPEC'         => $totalPEC,
-                        'TotalfactPatient' => $totalPatient,
-                    ]);
+                    // Les détails seront insérés ci-dessous, puis on recalcule depuis la DB
 
                     $messageSucces = 'Actes ajoutés à la facture existante avec succès.';
                 } else {
@@ -189,6 +179,18 @@ class ActesPatient extends Component
                         'Dents'          => 'Acte',
                     ]);
                 }
+
+                // Recalculer TotFacture depuis la somme réelle des détails
+                $nouveauTotal = DB::table('detailfacturepatient')
+                    ->where('fkidfacture', $facture->Idfacture)
+                    ->selectRaw('SUM(PrixFacture * Quantite) as total')
+                    ->value('total') ?? 0;
+
+                $facture->update([
+                    'TotFacture'       => $nouveauTotal,
+                    'TotalPEC'         => $nouveauTotal * $txpec,
+                    'TotalfactPatient' => $nouveauTotal * (1 - $txpec),
+                ]);
 
                 $this->lignes      = [];
                 $this->total       = 0;
