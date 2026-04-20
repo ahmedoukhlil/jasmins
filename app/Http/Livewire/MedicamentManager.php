@@ -10,6 +10,7 @@ use App\Models\LotMedicament;
 use App\Models\MouvementStock;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class MedicamentManager extends Component
@@ -147,11 +148,12 @@ class MedicamentManager extends Component
                 }
             }
             DB::commit();
+            Cache::forget('referentiel_medicaments_v2_' . (Auth::user()->fkidcabinet ?? 1));
         } catch (\Exception $e) {
             DB::rollBack();
             session()->flash('error', 'Erreur lors de l\'enregistrement : ' . $e->getMessage());
         }
-        
+
         $this->closeModal();
     }
 
@@ -166,6 +168,7 @@ class MedicamentManager extends Component
         $medicament = Medicament::find($this->medicamentToDelete);
         if ($medicament) {
             $medicament->delete();
+            Cache::forget('referentiel_medicaments_v2_' . (Auth::user()->fkidcabinet ?? 1));
             session()->flash('message', 'Médicament supprimé avec succès.');
         }
         $this->showDeleteModal = false;
