@@ -5,6 +5,7 @@ namespace App\Http\Livewire;
 use Livewire\Component;
 use App\Models\Patient;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Dentspatient;
 use Livewire\WithPagination;
@@ -21,7 +22,10 @@ class PatientManager extends Component
     public $showModal = false;
     public $isAssured = false;
     public $searchBy = 'all'; // all, name, nni, phone
-    public $creationOnly = false; // Si true, n'affiche que le formulaire de création
+    public $creationOnly = false;
+    public $showDeleteConfirm = false;
+    public $patientToDelete = null;
+    public $patientToDeleteNom = '';
 
     // Propriétés pour le formulaire
     public $patientId;
@@ -279,6 +283,66 @@ class PatientManager extends Component
             }
         } catch (\Exception $e) {
             session()->flash('error', 'Une erreur est survenue lors de la mise à jour du statut.');
+        }
+    }
+
+    public function confirmDeletePatient($id)
+    {
+        $patient = Patient::find($id);
+        if (!$patient) return;
+        $this->patientToDelete = $id;
+        $this->patientToDeleteNom = $patient->NomPatient ?? ($patient->Nom . ' ' . $patient->Prenom);
+        $this->showDeleteConfirm = true;
+    }
+
+    public function deletePatient()
+    {
+        if (!$this->patientToDelete) return;
+
+        try {
+            DB::transaction(function () {
+                $id = $this->patientToDelete;
+
+                // Supprimer les détails de factures
+                DB::table('detailfacturepatient')->whereIn('fkidfacture',
+                    DB::table('facture')->where('IDPatient', $id)->pluck('Idfacture')
+                )->delete();
+
+                // Supprimer les factures
+                DB::table('facture')->where('IDPatient', $id)->delete();
+
+                // Supprimer les ordonnances et leurs détails
+                $ordIds = DB::table('ordonnanceref')->where('fkidpatient', $id)->pluck('idordonnance');
+                if ($ordIds->isNotEmpty()) {
+                    DB::table('detailordonnance')->whereIn('fkidordonnance', $ordIds)->delete();
+                }
+                DB::table('ordonnanceref')->where('fkidpatient', $id)->delete();
+
+                // Supprimer les rendez-vous
+                DB::table('rendezvous')->where('fkidPatient', $id)->delete();
+
+                // Supprimer les mouvements stock liés
+                DB::table('mouvements_stock')->where('fkidPatient', $id)->delete();
+
+                // Supprimer consultations et analyses
+                DB::table('consultations_medicales')->where('fkidPatient', $id)->delete();
+                DB::table('analyses_patient')->where('fkidPatient', $id)->delete();
+
+                // Supprimer dossier médical
+                DB::table('dossiers_medicaux')->where('fkidPatient', $id)->delete();
+
+                // Supprimer le patient
+                Patient::destroy($id);
+            });
+
+            $this->showDeleteConfirm = false;
+            $this->patientToDelete = null;
+            $this->patientToDeleteNom = '';
+            session()->flash('message', 'Patient et toutes ses données supprimés avec succès.');
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur suppression patient', ['error' => $e->getMessage()]);
+            session()->flash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
         }
     }
 

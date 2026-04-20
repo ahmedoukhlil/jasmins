@@ -140,6 +140,9 @@
                                     <button wire:click="edit({{ $patient->ID }})" class="text-primary hover:text-primary-dark" title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </button>
+                                    <button wire:click="confirmDeletePatient({{ $patient->ID }})" class="text-red-500 hover:text-red-700" title="Supprimer définitivement">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -514,4 +517,48 @@
         </div>
     </div>
     @endif
+
+    {{-- Modal confirmation suppression patient --}}
+    @if($showDeleteConfirm)
+    <div class="modal-overlay" style="z-index:70">
+        <div class="modal-box sm:max-w-md">
+            <div class="modal-header" style="background:#dc2626">
+                <h3><i class="fas fa-exclamation-triangle mr-2"></i>Supprimer définitivement ?</h3>
+                <button type="button" wire:click="$set('showDeleteConfirm', false)" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-user-times text-red-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">{{ $patientToDeleteNom }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Cette action est <strong>irréversible</strong>. Toutes les données liées seront supprimées :</p>
+                        <ul class="text-xs text-gray-500 mt-2 space-y-0.5 list-disc list-inside">
+                            <li>Factures et détails de facturation</li>
+                            <li>Ordonnances</li>
+                            <li>Rendez-vous</li>
+                            <li>Consultations médicales</li>
+                            <li>Dossier médical</li>
+                            <li>Analyses et mouvements de stock</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                    <button wire:click="$set('showDeleteConfirm', false)"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
+                        Annuler
+                    </button>
+                    <button wire:click="deletePatient"
+                            wire:loading.attr="disabled"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 flex items-center gap-2 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="deletePatient"><i class="fas fa-trash mr-1"></i> Supprimer définitivement</span>
+                        <span wire:loading wire:target="deletePatient"><i class="fas fa-spinner fa-spin mr-1"></i> Suppression...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
 </div> 
