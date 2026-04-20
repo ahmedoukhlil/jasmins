@@ -90,7 +90,7 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ number_format($facture->TotReglPatient ?? 0, 0, '', ' ') }} MRU</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ number_format(($facture->TotalfactPatient ?? 0) - ($facture->TotReglPatient ?? 0), 0, '', ' ') }} MRU</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ number_format($resteAPayerPatient, 0, '', ' ') }} MRU</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($resteAPayerPatient > 0)
                                 <span class="inline-block px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 text-xs font-semibold">Non réglée</span>
