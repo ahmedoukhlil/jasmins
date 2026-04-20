@@ -44,9 +44,6 @@
     <div class="mb-6" wire:loading.class="opacity-50">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">Factures du patient</h2>
-            <button wire:click="openMedecinModal" class="btn-primary text-sm">
-                <i class="fas fa-plus"></i> Nouvelle facture
-            </button>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
