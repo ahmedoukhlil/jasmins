@@ -3,389 +3,365 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ordonnance - {{ $ordonnance->refOrd ?? 'ORDONNANCE' }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/print.css">
+    <title>Ordonnance — {{ $ordonnance->refOrd ?? '' }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #fff;
-            padding: 0;
-            margin: 0;
-        }
-
-        .page {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 auto;
-            background: white;
-            padding: 12mm 15mm 10mm 15mm;
-            position: relative;
-        }
-
-        .a4 {
-            width: 210mm;
-            min-height: 297mm;
-            padding: 12mm 15mm 10mm 15mm;
-        }
-
-        .a5 {
-            width: 148mm;
-            min-height: 210mm;
-            padding: 8mm 10mm 8mm 10mm;
-        }
-
-        .a5 .header-left,
-        .a5 .header-right {
-            font-size: 9px;
-        }
-
-        .a5 .header-left .cabinet-name,
-        .a5 .header-right .cabinet-name-ar {
-            font-size: 11px;
-        }
-
-        .a5 .header-center img {
-            max-width: 70px;
-            max-height: 60px;
-        }
-
-        .a5 .patient-info {
-            font-size: 9px;
-        }
-
-        .a5 .title-ar {
-            font-size: 15px;
-        }
-
-        .a5 .title-fr {
-            font-size: 13px;
-        }
-
-        .a5 .ordonnance-body {
-            min-height: 340px;
-            font-size: 11px;
-        }
-
-        .a5 .medication-name {
-            font-size: 11px;
-        }
-
-        .a5 .medication-dosage {
-            font-size: 10px;
-        }
-
-        .a5 .footer {
-            font-size: 8px;
-        }
-
-        /* Informations patient */
-        .patient-info {
-            margin-bottom: 24px;
-            font-size: 13px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            align-items: baseline;
+            font-family: 'Inter', Arial, sans-serif;
+            font-size: 12px;
+            color: #1f2937;
+            background: #f3f4f6;
             line-height: 1.5;
         }
 
-        .info-row-rtl {
-            direction: rtl;
-            text-align: right;
+        /* ── Print controls ── */
+        .print-controls {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            padding: 12px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
         }
-
-        .info-field {
-            flex: 1;
-        }
-
-        .info-field-center {
-            flex: 1;
-            text-align: center;
-        }
-
-        .patient-info strong {
-            font-weight: bold;
+        .print-controls select,
+        .print-controls button {
+            padding: 7px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
             font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            background: #fff;
+            color: #374151;
+        }
+        .print-controls button { background: #1e3a8a; color: #fff; border: none; font-weight: 600; }
+        .print-controls .btn-secondary { background: #6b7280; }
+        .print-controls button:hover { filter: brightness(1.1); }
+
+        /* ── Page ── */
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 24px auto;
+            background: #fff;
+            padding: 12mm 15mm 14mm 15mm;
+            position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Titre Ordonnance */
-        .title-section {
+        /* ── Header ── */
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #1e3a8a;
+            margin-bottom: 16px;
+        }
+        .header-fr { flex: 1; font-size: 10px; line-height: 1.7; color: #374151; }
+        .header-fr .cabinet-name { font-size: 12.5px; font-weight: 700; color: #1e3a8a; }
+        .header-fr .doctor-name { font-size: 11px; font-weight: 600; }
+        .header-fr .specialty { color: #6b7280; font-size: 9.5px; }
+        .header-logo { flex: 0 0 auto; text-align: center; padding: 0 14px; }
+        .header-logo img { max-height: 75px; max-width: 130px; object-fit: contain; }
+        .header-ar { flex: 1; font-size: 10px; line-height: 1.7; color: #374151; text-align: right; direction: rtl; }
+        .header-ar .cabinet-name { font-size: 12.5px; font-weight: 700; color: #1e3a8a; }
+        .header-ar .doctor-name { font-size: 11px; font-weight: 600; }
+        .header-ar .specialty { color: #6b7280; font-size: 9.5px; }
+
+        /* ── Patient info ── */
+        .patient-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            font-size: 11px;
+        }
+        .patient-grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .patient-fields { flex: 1; }
+        .patient-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 5px;
+            align-items: baseline;
+        }
+        .patient-label { font-weight: 600; color: #64748b; min-width: 100px; font-size: 10.5px; }
+        .patient-value {
+            flex: 1;
+            color: #1e293b;
+            font-weight: 500;
+            border-bottom: 1px dotted #94a3b8;
+            padding-bottom: 1px;
+            min-width: 120px;
+        }
+        .patient-date { text-align: right; font-size: 11px; font-weight: 600; color: #374151; }
+
+        /* ── Title ── */
+        .ord-title {
             text-align: center;
-            margin: 20px 0 26px 0;
+            margin: 16px 0 20px 0;
         }
-
-        .title-ar {
-            font-size: 17px;
-            font-weight: bold;
-            margin-bottom: 4px;
-            letter-spacing: 0.3px;
+        .ord-title-ar {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e3a8a;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
         }
-
-        .title-fr {
+        .ord-title-fr {
             font-size: 15px;
-            font-weight: bold;
-            letter-spacing: 5px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: #1f2937;
+            text-transform: uppercase;
+        }
+        .ord-title-line {
+            width: 60px;
+            height: 2px;
+            background: #1e3a8a;
+            margin: 6px auto 0;
         }
 
-        /* Corps de l'ordonnance */
-        .ordonnance-body {
-            min-height: 460px;
-            padding: 10px 20px;
+        /* ── Ordonnance body ── */
+        .ord-body {
+            flex: 1;
+            min-height: 380px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 14px 20px;
             font-size: 12px;
-            line-height: 2.2;
+            line-height: 2;
             position: relative;
         }
-        
 
         .medication-item {
-            margin-bottom: 18px;
+            margin-bottom: 14px;
             page-break-inside: avoid;
         }
-
-        .medication-name {
-            font-weight: bold;
-            font-size: 13px;
-        }
-
-        .medication-dosage {
-            margin-left: 25px;
-            font-style: normal;
-            color: #444;
-            font-size: 12px;
-        }
-
-        /* Pied de page */
-        .footer {
-            position: absolute;
-            bottom: 8mm;
-            left: 15mm;
-            right: 15mm;
-            border-top: 1.5px solid #000;
-            padding-top: 5px;
+        .medication-num {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            background: #1e3a8a;
+            color: #fff;
+            border-radius: 50%;
             text-align: center;
-            font-size: 9px;
+            line-height: 22px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        .medication-name {
+            font-weight: 600;
+            font-size: 12.5px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+        }
+        .medication-dosage {
+            margin-left: 28px;
+            font-size: 11.5px;
+            color: #4b5563;
+            font-style: italic;
             line-height: 1.6;
         }
 
-        .footer-ar {
-            font-weight: normal;
-            margin-bottom: 1px;
-            font-size: 9px;
-        }
-
-        .footer-fr {
-            font-style: italic;
-            font-size: 9px;
-        }
-
-        /* Contrôles d'impression */
-        .print-controls {
+        /* ── Footer ── */
+        .ord-footer {
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
             display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin: 18px 0;
+            justify-content: space-between;
+            align-items: flex-end;
         }
-
-        .print-controls select,
-        .print-controls button {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
+        .footer-note {
+            font-size: 9px;
+            color: #9ca3af;
+            line-height: 1.6;
         }
-
-        .print-controls button {
-            background: #2c5282;
-            color: #fff;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .footer-signature {
+            text-align: center;
+            min-width: 140px;
         }
+        .footer-signature .sig-label { font-size: 10px; font-weight: 600; color: #64748b; margin-bottom: 28px; }
+        .footer-signature .sig-line { border-top: 1px solid #1e3a8a; padding-top: 4px; font-size: 10px; font-style: italic; color: #374151; }
 
-        .print-controls button:hover {
-            background: #1a365d;
-        }
-
-        .print-controls .btn-success {
-            background: #28a745;
-        }
-
-        .print-controls .btn-success:hover {
-            background: #218838;
-        }
-
-        .print-controls .btn-secondary {
-            background: #6c757d;
-        }
-
-        .print-controls .btn-secondary:hover {
-            background: #5a6268;
-        }
-
+        /* ── Print ── */
         @media print {
-            body {
-                margin: 0;
-                padding: 0;
-            }
-
+            body { background: #fff; }
+            .print-controls { display: none !important; }
             .page {
                 margin: 0;
-                padding: 12mm 15mm 10mm 15mm;
+                padding: 10mm 13mm 12mm 13mm;
                 box-shadow: none;
+                min-height: 0;
             }
-
-            .print-controls {
-                display: none !important;
-            }
-
-            .footer {
-                position: fixed;
-                bottom: 8mm;
-                left: 15mm;
-                right: 15mm;
-            }
-
-
-            @page {
-                margin: 0;
-                size: A4 portrait;
-            }
+            @page { size: A4 portrait; margin: 0; }
+            .medication-item { page-break-inside: avoid; }
         }
 
         @media screen {
-            .page {
-                box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                margin: 20px auto;
-            }
-            
-            body {
-                background: #f5f5f5;
-            }
+            .page { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
         }
+
+        /* A5 */
+        .page.a5 {
+            width: 148mm;
+            min-height: 210mm;
+            padding: 8mm 10mm 10mm 10mm;
+        }
+        .page.a5 .ord-title-ar { font-size: 14px; }
+        .page.a5 .ord-title-fr { font-size: 12px; letter-spacing: 4px; }
+        .page.a5 .ord-body { min-height: 270px; font-size: 11px; }
+        .page.a5 .medication-name { font-size: 11px; }
+        .page.a5 .header-fr,
+        .page.a5 .header-ar { font-size: 9px; }
+        .page.a5 .header-fr .cabinet-name,
+        .page.a5 .header-ar .cabinet-name { font-size: 11px; }
     </style>
 </head>
 <body>
-    <div class="print-controls">
-        <select id="pageFormat" onchange="updatePageFormat()">
-            <option value="A4">Format A4</option>
-            <option value="A5">Format A5</option>
-        </select>
-        <button onclick="window.print()">
-            <i class="fas fa-print"></i> Imprimer
-        </button>
-        <button class="btn-secondary" onclick="window.location.href='{{ route('ordonnance.blank') }}'">
-            <i class="fas fa-file-medical"></i> Ordonnance vierge
-        </button>
+
+<div class="print-controls">
+    <select id="pageFormat" onchange="updatePageFormat()">
+        <option value="A4">Format A4</option>
+        <option value="A5">Format A5</option>
+    </select>
+    <button onclick="window.print()">⎙ Imprimer</button>
+    <button class="btn-secondary" onclick="window.location.href='{{ route('ordonnance.blank') }}'">Ordonnance vierge</button>
+</div>
+
+<div class="page a4" id="documentPage">
+
+    @php
+        use App\Models\Infocabinet;
+        $cab = Infocabinet::first();
+        $logoBase64 = null;
+        if ($cab && $cab->logo && file_exists(public_path($cab->logo))) {
+            try {
+                $ext = strtolower(pathinfo($cab->logo, PATHINFO_EXTENSION));
+                $mime = in_array($ext, ['jpg','jpeg']) ? 'image/jpeg' : ($ext === 'svg' ? 'image/svg+xml' : 'image/png');
+                $logoBase64 = 'data:'.$mime.';base64,'.base64_encode(file_get_contents(public_path($cab->logo)));
+            } catch (\Exception $e) {}
+        }
+        $isBlank = !isset($ordonnance->patient) || empty($ordonnance->refOrd);
+        $age = null;
+        if (!$isBlank && isset($ordonnance->patient) && $ordonnance->patient->DtNaissance) {
+            try { $age = \Carbon\Carbon::parse($ordonnance->patient->DtNaissance)->age; } catch (\Exception $e) {}
+        }
+    @endphp
+
+    {{-- ── Header ── --}}
+    <div class="doc-header">
+        <div class="header-fr">
+            @if($cab && $cab->NomCabFr)<div class="cabinet-name">{{ $cab->NomCabFr }}</div>@endif
+            @if($cab && $cab->DrFr)<div class="doctor-name">{{ $cab->DrFr }}</div>@endif
+            @if($cab && $cab->Specialite1Fr)<div class="specialty">{{ $cab->Specialite1Fr }}</div>@endif
+            @if($cab && $cab->Specialite2fr)<div class="specialty">{{ $cab->Specialite2fr }}</div>@endif
+            @if($cab && $cab->AdresseFr1)<div>{{ $cab->AdresseFr1 }}</div>@endif
+            @if($cab && $cab->AdresseFr2)<div>{{ $cab->AdresseFr2 }}</div>@endif
+            @if($cab && $cab->ContactFR)<div>{{ $cab->ContactFR }}</div>@endif
+        </div>
+        <div class="header-logo">
+            @if($logoBase64)<img src="{{ $logoBase64 }}" alt="Logo">@endif
+        </div>
+        <div class="header-ar">
+            @if($cab && $cab->NomCabAr)<div class="cabinet-name">{{ $cab->NomCabAr }}</div>@endif
+            @if($cab && $cab->DrAr)<div class="doctor-name">{{ $cab->DrAr }}</div>@endif
+            @if($cab && $cab->Specialite1Ar)<div class="specialty">{{ $cab->Specialite1Ar }}</div>@endif
+            @if($cab && $cab->Specialite2Ar)<div class="specialty">{{ $cab->Specialite2Ar }}</div>@endif
+            @if($cab && $cab->AdresseL1AR)<div>{{ $cab->AdresseL1AR }}</div>@endif
+            @if($cab && $cab->AdresseL2AR)<div>{{ $cab->AdresseL2AR }}</div>@endif
+            @if($cab && $cab->ContactAR)<div>{{ $cab->ContactAR }}</div>@endif
+        </div>
     </div>
 
-    <div class="page a4">
-        <!-- En-tête -->
-        @include('partials.recu-header')
-
-        <!-- Informations patient -->
-        <div class="patient-info">
-            <!-- Ligne 1 : Date seule -->
-            <div class="info-row" style="margin-bottom: 10px; justify-content: flex-end;">
-                @php
-                    $isBlank = !isset($ordonnance->patient) || empty($ordonnance->refOrd);
-                @endphp
-                <span><strong>Date : {{ !$isBlank && isset($ordonnance->dtPrescript) ? \Carbon\Carbon::parse($ordonnance->dtPrescript)->format('d/m/Y') : '.....................' }}</strong></span>
-            </div>
-            
-            <!-- Ligne 2 : Nom et Prénom -->
-            <div class="info-row" style="margin-bottom: 10px;">
-                <div style="width: 100%; display: flex; justify-content: space-between; align-items: baseline;">
-                    <span><strong>Nom et Prénom :</strong></span>
-                    <span style="flex: 1; text-align: center; border-bottom: 1px dotted #000; margin: 0 5px;">
-                        <strong>{{ isset($ordonnance->patient) && $ordonnance->patient->NomContact ? $ordonnance->patient->NomContact : '' }}</strong>
-                    </span>
-                    <span style="direction: rtl;"><strong>الاسم و اللقب :</strong></span>
+    {{-- ── Patient info ── --}}
+    <div class="patient-section">
+        <div class="patient-grid">
+            <div class="patient-fields">
+                <div class="patient-row">
+                    <span class="patient-label">Nom et Prénom :</span>
+                    <span class="patient-value">{{ !$isBlank && $ordonnance->patient->NomContact ? $ordonnance->patient->NomContact : '' }}</span>
+                    <span class="patient-label" style="text-align:right; direction:rtl; margin-left:12px;">الاسم و اللقب</span>
+                </div>
+                <div class="patient-row">
+                    <span class="patient-label">Âge :</span>
+                    <span class="patient-value" style="max-width:80px">{{ $age ? $age . ' ans' : '' }}</span>
+                    <span class="patient-label" style="margin-left:20px;">Poids :</span>
+                    <span class="patient-value" style="max-width:80px"></span>
+                    <span class="patient-label" style="text-align:right; direction:rtl; margin-left:12px;">العمر / الوزن</span>
                 </div>
             </div>
-            
-            <!-- Ligne 3 : Age, Poids, Age (arabe) -->
-            <div class="info-row" style="display: flex; justify-content: space-between; align-items: baseline;">
-                @php
-                    $age = null;
-                    if (isset($ordonnance->patient) && $ordonnance->patient->DtNaissance) {
-                        try {
-                            $dateNaissance = \Carbon\Carbon::parse($ordonnance->patient->DtNaissance);
-                            $age = $dateNaissance->age;
-                        } catch (\Exception $e) {
-                            $age = null;
-                        }
-                    }
-                @endphp
-                <span style="flex: 0 0 auto;"><strong>Age : {{ $age ? $age . ' ans' : '......' }}</strong></span>
-                <span style="flex: 1; text-align: center;"><strong>Poids :</strong>...............<strong>الوزن</strong></span>
-                <span style="flex: 0 0 auto; direction: rtl;"><strong>العمر : {{ $age ? $age : '......' }}</strong></span>
+            <div class="patient-date">
+                {{ !$isBlank && isset($ordonnance->dtPrescript) ? \Carbon\Carbon::parse($ordonnance->dtPrescript)->format('d/m/Y') : '' }}
             </div>
-        </div>
-
-        <!-- Titre -->
-        <div class="title-section">
-            <div class="title-ar">وصفة طبية</div>
-            <div class="title-fr">ORDONNANCE</div>
-        </div>
-
-        <!-- Corps de l'ordonnance -->
-        <div class="ordonnance-body">
-            @if(isset($ordonnance->ordonnances) && count($ordonnance->ordonnances) > 0)
-                @foreach($ordonnance->ordonnances as $index => $ligne)
-                    <div class="medication-item">
-                        <div class="medication-name">{{ $index + 1 }}. {{ $ligne->Libelle }}</div>
-                        @if($ligne->Utilisation)
-                            <div class="medication-dosage">{{ $ligne->Utilisation }}</div>
-                        @endif
-                    </div>
-                @endforeach
-            @else
-                <!-- Espace vide pour prescription manuscrite -->
-            @endif
-        </div>
-
-        <!-- Pied de page -->
-        <div class="footer">
-            <div class="footer-ar">الرجاء إحضار الوصفة عند الاستشارة القادمة</div>
-            <div class="footer-fr">Prier de rapporter l'ordonnance à la prochaine Consultation</div>
         </div>
     </div>
 
-    <script>
-        // Cache des éléments DOM
-        const elements = {
-            pageFormat: document.getElementById('pageFormat'),
-            container: document.querySelector('.page')
-        };
+    {{-- ── Title ── --}}
+    <div class="ord-title">
+        <div class="ord-title-ar">وصفة طبية</div>
+        <div class="ord-title-fr">Ordonnance</div>
+        <div class="ord-title-line"></div>
+    </div>
 
-        // Fonction pour changer le format de page
-        function updatePageFormat() {
-            const isA5 = elements.pageFormat.value === 'A5';
-            elements.container.classList.toggle('a4', !isA5);
-            elements.container.classList.toggle('a5', isA5);
-        }
+    {{-- ── Body ── --}}
+    <div class="ord-body">
+        @if(!$isBlank && isset($ordonnance->ordonnances) && count($ordonnance->ordonnances) > 0)
+            @foreach($ordonnance->ordonnances as $index => $ligne)
+                <div class="medication-item">
+                    <div class="medication-name">
+                        <span class="medication-num">{{ $index + 1 }}</span>
+                        {{ $ligne->Libelle }}
+                    </div>
+                    @if($ligne->Utilisation)
+                        <div class="medication-dosage">{{ $ligne->Utilisation }}</div>
+                    @endif
+                </div>
+            @endforeach
+        @endif
+    </div>
 
-        // Auto-print si paramètre autoprint
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('autoprint') === '1') {
-            window.onload = function() {
-                setTimeout(function() {
-                    window.print();
-                }, 500);
-            };
-        }
-    </script>
+    {{-- ── Footer ── --}}
+    <div class="ord-footer">
+        <div class="footer-note">
+            <div>الرجاء إحضار الوصفة عند الاستشارة القادمة</div>
+            <div>Prière de rapporter l'ordonnance à la prochaine consultation</div>
+        </div>
+        <div class="footer-signature">
+            <div class="sig-label">Signature &amp; Cachet</div>
+            <div class="sig-line">
+                @if(!$isBlank && isset($ordonnance->prescripteur))Dr {{ $ordonnance->prescripteur->Nom ?? '' }}@endif
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function updatePageFormat() {
+    const isA5 = document.getElementById('pageFormat').value === 'A5';
+    const page = document.getElementById('documentPage');
+    page.classList.toggle('a4', !isA5);
+    page.classList.toggle('a5', isA5);
+}
+
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('autoprint') === '1') {
+    window.onload = () => setTimeout(() => window.print(), 500);
+}
+</script>
 </body>
 </html>
