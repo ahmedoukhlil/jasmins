@@ -900,4 +900,3 @@ $token          = $encodedPayload . '.' . base64url($signature);
 
 
 
-claude mcp add TestSprite --env API_KEY=sk-user-70bmCOtj5AFG93xWoTCZGJRXMQUEIiQUtkwbtrZBAkxYIbMZdtGeJjjPoXxNTmhbb_glm-MIekkMF351I8fznizVLxd3E91fMWJswkY4ilvQiiUOvP5lj1oWuUwckA5NDGs -- npx @testsprite/testsprite-mcp@latest
