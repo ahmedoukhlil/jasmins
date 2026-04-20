@@ -111,38 +111,63 @@ class ActesPatient extends Component
                     $txpec = floatval($patient->assureur->TauxdePEC ?? 0) / 100;
                 }
 
-                $totalPEC     = $this->total * $txpec;
-                $totalPatient = $this->total * (1 - $txpec);
+                // Chercher la facture non encaissée la plus récente du patient
+                $facture = Facture::where('IDPatient', $patientId)
+                    ->where('estfacturer', 0)
+                    ->where('TotReglPatient', 0)
+                    ->where('fkidCabinet', $user->fkidcabinet)
+                    ->orderBy('DtFacture', 'desc')
+                    ->first();
 
-                // Créer la facture (non encaissée)
-                $factureData = Facture::generateUniqueFactureNumber($user->fkidcabinet);
-                $facture = Facture::create([
-                    'Nfacture'              => $factureData['Nfacture'],
-                    'anneeFacture'          => $factureData['anneeFacture'],
-                    'nordre'                => $factureData['nordre'],
-                    'DtFacture'             => Carbon::now(),
-                    'IDPatient'             => $patientId,
-                    'ISTP'                  => $txpec > 0 ? 1 : 0,
-                    'fkidEtsAssurance'      => $fkidEtsAssurance,
-                    'TXPEC'                 => $txpec,
-                    'TotFacture'            => $this->total,
-                    'TotalPEC'              => $totalPEC,
-                    'TotalfactPatient'      => $totalPatient,
-                    'ModeReglement'         => null,
-                    'DtReglement'           => null,
-                    'FkidMedecinInitiateur' => $medecinId,
-                    'fkidCabinet'           => $user->fkidcabinet,
-                    'ispayerAssureur'       => 0,
-                    'user'                  => $user->NomComplet ?? $user->name,
-                    'TotReglPatient'        => 0, // Pas encore encaissé
-                    'ReglementPEC'          => 0,
-                    'PartLaboratoire'       => 0,
-                    'MontantAffectation'    => 0,
-                    'Type'                  => 'Facture',
-                    'estfacturer'           => 0, // Non encaissée
-                ]);
+                if ($facture) {
+                    // Ajouter les actes à la facture existante et recalculer les totaux
+                    $nouveauTotal = $facture->TotFacture + $this->total;
+                    $totalPEC     = $nouveauTotal * $txpec;
+                    $totalPatient = $nouveauTotal * (1 - $txpec);
 
-                // Créer les détails
+                    $facture->update([
+                        'TotFacture'       => $nouveauTotal,
+                        'TotalPEC'         => $totalPEC,
+                        'TotalfactPatient' => $totalPatient,
+                    ]);
+
+                    $messageSucces = 'Actes ajoutés à la facture existante avec succès.';
+                } else {
+                    // Créer une nouvelle facture (non encaissée)
+                    $totalPEC     = $this->total * $txpec;
+                    $totalPatient = $this->total * (1 - $txpec);
+
+                    $factureData = Facture::generateUniqueFactureNumber($user->fkidcabinet);
+                    $facture = Facture::create([
+                        'Nfacture'              => $factureData['Nfacture'],
+                        'anneeFacture'          => $factureData['anneeFacture'],
+                        'nordre'                => $factureData['nordre'],
+                        'DtFacture'             => Carbon::now(),
+                        'IDPatient'             => $patientId,
+                        'ISTP'                  => $txpec > 0 ? 1 : 0,
+                        'fkidEtsAssurance'      => $fkidEtsAssurance,
+                        'TXPEC'                 => $txpec,
+                        'TotFacture'            => $this->total,
+                        'TotalPEC'              => $totalPEC,
+                        'TotalfactPatient'      => $totalPatient,
+                        'ModeReglement'         => null,
+                        'DtReglement'           => null,
+                        'FkidMedecinInitiateur' => $medecinId,
+                        'fkidCabinet'           => $user->fkidcabinet,
+                        'ispayerAssureur'       => 0,
+                        'user'                  => $user->NomComplet ?? $user->name,
+                        'TotReglPatient'        => 0,
+                        'ReglementPEC'          => 0,
+                        'PartLaboratoire'       => 0,
+                        'MontantAffectation'    => 0,
+                        'Type'                  => 'Facture',
+                        'estfacturer'           => 0,
+                    ]);
+
+                    $messageSucces = 'Actes prescrits et nouvelle facture créée avec succès.';
+                }
+
+                // Créer les détails de facture
                 foreach ($this->lignes as $ligne) {
                     $prixLigne = floatval($ligne['prix']) * intval($ligne['quantite']);
                     DetailFacturePatient::create([
@@ -170,7 +195,7 @@ class ActesPatient extends Component
                 $this->search_acte = '';
                 $this->loadActes();
 
-                session()->flash('success', 'Actes prescrits et facture créée avec succès.');
+                session()->flash('success', $messageSucces);
             });
         } catch (\Exception $e) {
             \Log::error('Erreur ActesPatient::save()', ['error' => $e->getMessage()]);
