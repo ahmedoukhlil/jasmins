@@ -121,9 +121,30 @@
             </div>
             <div class="modal-body">
                 @if(count($detailData) > 0)
-                <p class="text-sm text-gray-500 mb-3">
-                    {{ (($this->detailPage - 1) * $this->detailPerPage) + 1 }}–{{ min($this->detailPage * $this->detailPerPage, count($detailData)) }} sur {{ count($detailData) }} résultat(s)
-                </p>
+                @php $filteredCount = count($this->detailDataFiltered); @endphp
+                <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                    <p class="text-sm text-gray-500">
+                        @if($filteredCount > 0)
+                            {{ (($this->detailPage - 1) * $this->detailPerPage) + 1 }}–{{ min($this->detailPage * $this->detailPerPage, $filteredCount) }} sur {{ $filteredCount }} résultat(s)
+                            @if($detailSearch !== '') <span class="text-gray-400">(filtré sur {{ count($detailData) }})</span>@endif
+                        @else
+                            Aucun résultat pour « {{ $detailSearch }} »
+                        @endif
+                    </p>
+                    <div class="relative flex-1 min-w-[220px] max-w-xs">
+                        <input type="text" wire:model.debounce.300ms="detailSearch"
+                               placeholder="Rechercher…"
+                               class="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        @if($detailSearch !== '')
+                        <button type="button" wire:click="$set('detailSearch', '')"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        @endif
+                    </div>
+                </div>
+                @if($filteredCount > 0)
                 <div class="overflow-x-auto">
                     <table>
                         <thead>
@@ -135,7 +156,7 @@
                                     @if(in_array($detailType, ['total', 'valeur']))<th>Valeur</th>@endif
                                     @if(in_array($detailType, ['total', 'quantite', 'faible']))<th>Seuil min</th>@endif
                                     @if($detailType === 'faible')<th>Déficit</th>@endif
-                                    @if($detailType === 'total')<th>Statut</th>@endif
+                                    @if($detailType === 'total')<th>Statut</th><th>Action</th>@endif
                                     @if(in_array($detailType, ['faible', 'rupture']))<th></th>@endif
                                 @elseif(in_array($detailType, ['expires', 'expire_bientot']))
                                     <th>Médicament</th>
@@ -173,6 +194,15 @@
                                             <span class="badge badge-error">Rupture</span>
                                         @else
                                             <span class="badge badge-success">OK</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(!empty($item['medicament_id']))
+                                        <button wire:click="openAjustementModal({{ $item['medicament_id'] }})"
+                                                class="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                                                title="Ajuster la quantité en stock">
+                                            <i class="fas fa-edit mr-0.5"></i> Modifier stock
+                                        </button>
                                         @endif
                                     </td>
                                     @endif
@@ -216,6 +246,7 @@
                         </tbody>
                     </table>
                 </div>
+                @endif
 
                 @if($this->detailTotalPages > 1)
                 <div class="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
@@ -254,6 +285,139 @@
 
                 <div class="flex justify-end mt-4">
                     <button wire:click="fermerDetailModal" class="btn-secondary">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal ajustement de stock (inventaire) --}}
+    @if($showAjustementModal)
+    <div class="modal-overlay" style="z-index:70;" wire:click.self="closeAjustementModal">
+        <div class="modal-box max-w-lg w-full">
+            <div class="modal-header">
+                <div>
+                    <h2><i class="fas fa-edit mr-2"></i>Ajuster le stock</h2>
+                    @if($ajustementLibelle)
+                        <p class="text-sm text-gray-500 mt-0.5">{{ $ajustementLibelle }}</p>
+                    @endif
+                </div>
+                <button wire:click="closeAjustementModal" class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 flex items-start gap-2">
+                    <i class="fas fa-info-circle mt-0.5 flex-shrink-0"></i>
+                    <span>Utilisez ce formulaire pour corriger la quantité en stock suite à un inventaire, une casse, une perte, etc.</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Quantité actuelle</label>
+                        <input type="number" value="{{ $ajustementQuantiteActuelle }}" disabled
+                               class="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-lg text-sm text-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Nouvelle quantité <span class="text-red-500">*</span></label>
+                        <input type="number" wire:model="ajustementNouvelleQuantite" min="0" step="1"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        @error('ajustementNouvelleQuantite') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+
+                @php
+                    $ecartQte = (float)$ajustementNouvelleQuantite - (float)$ajustementQuantiteActuelle;
+                    $ancienneValeur = (float)$ajustementValeurActuelle;
+                    if ($ecartQte < 0) {
+                        // Décrément FIFO : retirer les lots les plus anciens
+                        $aRetirer = abs($ecartQte);
+                        $valeurRetiree = 0;
+                        foreach ($ajustementLots as $lot) {
+                            if ($aRetirer <= 0) break;
+                            $prelever = min($lot['quantite'], $aRetirer);
+                            $valeurRetiree += $prelever * $lot['prixAchat'];
+                            $aRetirer -= $prelever;
+                        }
+                        $nouvelleValeur = $ancienneValeur - $valeurRetiree;
+                    } elseif ($ecartQte > 0) {
+                        $nouvelleValeur = $ancienneValeur + $ecartQte * (float)$ajustementPrixNouveauStock;
+                    } else {
+                        $nouvelleValeur = $ancienneValeur;
+                    }
+                    $ecartValeur = $nouvelleValeur - $ancienneValeur;
+                @endphp
+
+                @if(count($ajustementLots) > 0)
+                <div class="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase">
+                        Lots en stock ({{ count($ajustementLots) }})
+                    </div>
+                    <div class="max-h-36 overflow-y-auto">
+                        <table class="w-full text-xs">
+                            <thead class="bg-gray-50 text-gray-500 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-1.5 text-left font-medium">Lot</th>
+                                    <th class="px-3 py-1.5 text-right font-medium">Qté</th>
+                                    <th class="px-3 py-1.5 text-right font-medium">PA unit.</th>
+                                    <th class="px-3 py-1.5 text-right font-medium">Valeur</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach($ajustementLots as $lot)
+                                <tr>
+                                    <td class="px-3 py-1.5">{{ $lot['numeroLot'] ?? '—' }}</td>
+                                    <td class="px-3 py-1.5 text-right">{{ number_format($lot['quantite'], 0) }}</td>
+                                    <td class="px-3 py-1.5 text-right">{{ number_format($lot['prixAchat'], 2) }}</td>
+                                    <td class="px-3 py-1.5 text-right font-medium">{{ number_format($lot['valeur'], 0) }} MRU</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
+
+                @if($ecartQte > 0)
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Prix d'achat unitaire du nouveau stock <span class="text-red-500">*</span></label>
+                    <input type="number" wire:model="ajustementPrixNouveauStock" min="0" step="0.01"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    @error('ajustementPrixNouveauStock') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    <p class="text-xs text-gray-500 mt-1">Un nouveau lot de {{ number_format($ecartQte, 0) }} unité(s) sera créé à ce prix.</p>
+                </div>
+                @endif
+
+                <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-gray-600">Valeur actuelle :</span>
+                        <span class="font-medium">{{ number_format($ancienneValeur, 0) }} MRU</span>
+                    </div>
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-gray-600">Nouvelle valeur :</span>
+                        <span class="font-semibold text-blue-700">{{ number_format($nouvelleValeur, 0) }} MRU</span>
+                    </div>
+                    @if($ecartValeur != 0)
+                    <div class="flex items-center justify-between pt-1 border-t border-gray-200 mt-1">
+                        <span class="text-gray-600">Écart :</span>
+                        <span class="font-semibold {{ $ecartValeur > 0 ? 'text-green-700' : 'text-red-700' }}">
+                            {{ $ecartValeur > 0 ? '+' : '' }}{{ number_format($ecartValeur, 0) }} MRU
+                        </span>
+                    </div>
+                    @endif
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Motif <span class="text-red-500">*</span></label>
+                    <textarea wire:model.defer="ajustementMotif" rows="3"
+                              placeholder="Ex: Inventaire physique, Casse, Perte, Vol, Correction d'erreur..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    @error('ajustementMotif') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button wire:click="closeAjustementModal" class="btn-secondary">Annuler</button>
+                    <button wire:click="enregistrerAjustement" class="btn-primary">
+                        <i class="fas fa-save mr-1"></i> Enregistrer l'ajustement
+                    </button>
                 </div>
             </div>
         </div>

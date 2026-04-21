@@ -73,6 +73,18 @@ class PharmacieManager extends Component
     public $detailData = [];
     public $detailPage = 1;
     public $detailPerPage = 20;
+    public $detailSearch = '';
+
+    // Modal ajustement de stock (inventaire)
+    public $showAjustementModal = false;
+    public $ajustementMedicamentId = null;
+    public $ajustementLibelle = '';
+    public $ajustementQuantiteActuelle = 0;
+    public $ajustementNouvelleQuantite = 0;
+    public $ajustementValeurActuelle = 0; // Valeur réelle basée sur les lots
+    public $ajustementPrixNouveauStock = 0; // Prix d'achat pour quantité ajoutée (ajustement positif)
+    public $ajustementMotif = '';
+    public $ajustementLots = []; // Détail des lots pour affichage
 
     protected $paginationTheme = 'bootstrap';
     
@@ -187,6 +199,199 @@ class PharmacieManager extends Component
     {
         $this->showEntreeModal = false;
         $this->resetEntreeForm();
+    }
+
+    public function openAjustementModal($medicamentId)
+    {
+        $medicament = Medicament::find($medicamentId);
+        if (!$medicament) {
+            session()->flash('error', 'Médicament introuvable.');
+            return;
+        }
+        $cabinetId = Auth::user()->fkidcabinet;
+        $stock = StockMedicament::where('fkidMedicament', $medicamentId)
+            ->where('fkidCabinet', $cabinetId)->first();
+
+        // Charger les lots actifs (FIFO : ordonnés par date d'entrée)
+        $lots = [];
+        $valeurActuelle = 0;
+        if ($stock) {
+            $lotsQuery = LotMedicament::where('fkidStock', $stock->idStock)
+                ->where('quantiteRestante', '>', 0)
+                ->where('Masquer', 0)
+                ->orderBy('dateEntree', 'asc')
+                ->get();
+            foreach ($lotsQuery as $lot) {
+                $lots[] = [
+                    'id' => $lot->idLot,
+                    'numeroLot' => $lot->numeroLot,
+                    'quantite' => (float)$lot->quantiteRestante,
+                    'prixAchat' => (float)$lot->prixAchatUnitaire,
+                    'valeur' => (float)$lot->quantiteRestante * (float)$lot->prixAchatUnitaire,
+                    'dateEntree' => $lot->dateEntree,
+                ];
+                $valeurActuelle += (float)$lot->quantiteRestante * (float)$lot->prixAchatUnitaire;
+            }
+        }
+
+        $this->ajustementMedicamentId = $medicamentId;
+        $this->ajustementLibelle = $medicament->LibelleMedic;
+        $this->ajustementQuantiteActuelle = $stock ? (float)$stock->quantiteStock : 0;
+        $this->ajustementNouvelleQuantite = $this->ajustementQuantiteActuelle;
+        $this->ajustementValeurActuelle = $valeurActuelle;
+        $this->ajustementPrixNouveauStock = $stock ? (float)$stock->prixAchat : 0;
+        $this->ajustementLots = $lots;
+        $this->ajustementMotif = '';
+        $this->showAjustementModal = true;
+    }
+
+    public function closeAjustementModal()
+    {
+        $this->showAjustementModal = false;
+        $this->ajustementMedicamentId = null;
+        $this->ajustementLibelle = '';
+        $this->ajustementQuantiteActuelle = 0;
+        $this->ajustementNouvelleQuantite = 0;
+        $this->ajustementValeurActuelle = 0;
+        $this->ajustementPrixNouveauStock = 0;
+        $this->ajustementLots = [];
+        $this->ajustementMotif = '';
+    }
+
+    public function enregistrerAjustement()
+    {
+        $rules = [
+            'ajustementNouvelleQuantite' => 'required|numeric|min:0',
+            'ajustementMotif' => 'required|string|min:3',
+        ];
+        $messages = [
+            'ajustementNouvelleQuantite.required' => 'La nouvelle quantité est requise.',
+            'ajustementNouvelleQuantite.min' => 'La quantité ne peut pas être négative.',
+            'ajustementMotif.required' => 'Le motif est obligatoire.',
+            'ajustementMotif.min' => 'Le motif doit contenir au moins 3 caractères.',
+        ];
+
+        $ecart = (float)$this->ajustementNouvelleQuantite - (float)$this->ajustementQuantiteActuelle;
+        if ($ecart > 0) {
+            $rules['ajustementPrixNouveauStock'] = 'required|numeric|min:0';
+            $messages['ajustementPrixNouveauStock.required'] = 'Le prix d\'achat du nouveau stock est requis.';
+        }
+
+        $this->validate($rules, $messages);
+
+        $cabinetId = Auth::user()->fkidcabinet;
+        $userId = Auth::id();
+
+        $stock = StockMedicament::where('fkidMedicament', $this->ajustementMedicamentId)
+            ->where('fkidCabinet', $cabinetId)->first();
+
+        if (!$stock) {
+            session()->flash('error', 'Stock introuvable pour ce médicament.');
+            return;
+        }
+
+        $ancienneQuantite = (float)$stock->quantiteStock;
+        $nouvelleQuantite = (float)$this->ajustementNouvelleQuantite;
+        $ecart = $nouvelleQuantite - $ancienneQuantite;
+
+        if ($ecart == 0) {
+            session()->flash('error', 'Aucun changement de quantité.');
+            return;
+        }
+
+        DB::transaction(function () use ($stock, $nouvelleQuantite, $ecart, $userId) {
+            if ($ecart < 0) {
+                // Décrément : consommer en FIFO sur les lots
+                $aDecrementer = abs($ecart);
+                $lots = LotMedicament::where('fkidStock', $stock->idStock)
+                    ->where('quantiteRestante', '>', 0)
+                    ->where('Masquer', 0)
+                    ->orderBy('dateEntree', 'asc')
+                    ->lockForUpdate()
+                    ->get();
+
+                foreach ($lots as $lot) {
+                    if ($aDecrementer <= 0) break;
+                    $prelever = min((float)$lot->quantiteRestante, $aDecrementer);
+                    $lot->update(['quantiteRestante' => (float)$lot->quantiteRestante - $prelever]);
+
+                    MouvementStock::create([
+                        'fkidStock' => $stock->idStock,
+                        'fkidMedicament' => $this->ajustementMedicamentId,
+                        'fkidLot' => $lot->idLot,
+                        'typeMouvement' => 'AJUSTEMENT',
+                        'quantite' => -$prelever,
+                        'prixUnitaire' => (float)$lot->prixAchatUnitaire,
+                        'montantTotal' => (float)$lot->prixAchatUnitaire * $prelever,
+                        'motif' => $this->ajustementMotif,
+                        'fkidUser' => $userId,
+                        'dateMouvement' => Carbon::now(),
+                        'reference' => null,
+                        'notes' => 'Ajustement d\'inventaire (-)',
+                    ]);
+                    $aDecrementer -= $prelever;
+                }
+            } else {
+                // Incrément : créer un nouveau lot avec le prix d'achat saisi
+                $prixAchat = (float)$this->ajustementPrixNouveauStock;
+                $lot = LotMedicament::create([
+                    'fkidStock' => $stock->idStock,
+                    'fkidMedicament' => $this->ajustementMedicamentId,
+                    'numeroLot' => null,
+                    'quantiteInitiale' => $ecart,
+                    'quantiteRestante' => $ecart,
+                    'dateExpiration' => null,
+                    'dateEntree' => Carbon::now(),
+                    'prixAchatUnitaire' => $prixAchat,
+                    'fournisseur' => null,
+                    'referenceFacture' => null,
+                    'fkidUser' => $userId,
+                    'Masquer' => 0,
+                ]);
+
+                MouvementStock::create([
+                    'fkidStock' => $stock->idStock,
+                    'fkidMedicament' => $this->ajustementMedicamentId,
+                    'fkidLot' => $lot->idLot,
+                    'typeMouvement' => 'AJUSTEMENT',
+                    'quantite' => $ecart,
+                    'prixUnitaire' => $prixAchat,
+                    'montantTotal' => $prixAchat * $ecart,
+                    'motif' => $this->ajustementMotif,
+                    'fkidUser' => $userId,
+                    'dateMouvement' => Carbon::now(),
+                    'reference' => null,
+                    'notes' => 'Ajustement d\'inventaire (+)',
+                ]);
+            }
+
+            // Recalculer le prix d'achat moyen pondéré à partir des lots restants
+            $lotsRestants = LotMedicament::where('fkidStock', $stock->idStock)
+                ->where('quantiteRestante', '>', 0)
+                ->where('Masquer', 0)
+                ->get();
+            $totalQte = 0;
+            $totalValeur = 0;
+            foreach ($lotsRestants as $l) {
+                $totalQte += (float)$l->quantiteRestante;
+                $totalValeur += (float)$l->quantiteRestante * (float)$l->prixAchatUnitaire;
+            }
+            $prixMoyen = $totalQte > 0 ? $totalValeur / $totalQte : 0;
+
+            $stock->update([
+                'quantiteStock' => $nouvelleQuantite,
+                'prixAchat' => $prixMoyen,
+            ]);
+        });
+
+        session()->flash('message', 'Stock ajusté avec succès (' . ($ecart > 0 ? '+' : '') . number_format($ecart, 0) . ').');
+        $this->closeAjustementModal();
+        $this->calculerAlertes();
+
+        // Rafraîchir le modal de détails si ouvert
+        if ($this->showDetailModal) {
+            $this->ouvrirDetailModal($this->detailType);
+        }
     }
 
     public function resetEntreeForm()
@@ -862,23 +1067,33 @@ class PharmacieManager extends Component
                     ->whereHas('medicament', function($q) {
                         $q->where('fkidtype', 1);
                     })
-                    ->with('medicament')
+                    ->with(['medicament', 'lots' => function($q) {
+                        $q->where('quantiteRestante', '>', 0)->where('Masquer', 0);
+                    }])
                     ->orderBy('quantiteStock', 'desc')
                     ->get()
                     ->map(function($stock) {
+                        $valeur = $stock->lots->sum(function($l) {
+                            return (float)$l->quantiteRestante * (float)$l->prixAchatUnitaire;
+                        });
+                        // Fallback si aucun lot (stock ancien sans lot) : utiliser prix moyen
+                        if ($valeur == 0 && $stock->quantiteStock > 0) {
+                            $valeur = $stock->quantiteStock * $stock->prixAchat;
+                        }
                         return [
+                            'medicament_id' => $stock->medicament->IDMedic ?? null,
                             'medicament' => $stock->medicament->LibelleMedic ?? 'N/A',
                             'quantite' => $stock->quantiteStock,
                             'seuil_min' => $stock->quantiteMin,
                             'prix_achat' => $stock->prixAchat,
                             'prix_vente' => $stock->prixVente,
-                            'valeur' => $stock->quantiteStock * $stock->prixAchat,
+                            'valeur' => $valeur,
                             'statut' => $stock->isStockFaible() ? 'faible' : ($stock->quantiteStock == 0 ? 'rupture' : 'ok')
                         ];
                     })
                     ->toArray();
                 break;
-                
+
             case 'valeur':
                 $this->detailData = StockMedicament::where('fkidCabinet', $cabinetId)
                     ->where('Masquer', 0)
@@ -1088,24 +1303,51 @@ class PharmacieManager extends Component
         $this->detailType = '';
         $this->detailData = [];
         $this->detailPage = 1;
+        $this->detailSearch = '';
     }
     
-    public function getDetailDataPaginatedProperty()
+    public function getDetailDataFilteredProperty()
     {
         if (empty($this->detailData)) {
             return [];
         }
-        
-        $offset = ($this->detailPage - 1) * $this->detailPerPage;
-        return array_slice($this->detailData, $offset, $this->detailPerPage);
+        $search = trim($this->detailSearch);
+        if ($search === '') {
+            return $this->detailData;
+        }
+        $needle = mb_strtolower($search);
+        return array_values(array_filter($this->detailData, function($item) use ($needle) {
+            foreach (['medicament', 'patient', 'utilisateur', 'facture', 'numero_lot', 'reference'] as $key) {
+                if (!empty($item[$key]) && mb_stripos((string)$item[$key], $needle) !== false) {
+                    return true;
+                }
+            }
+            return false;
+        }));
     }
-    
+
+    public function getDetailDataPaginatedProperty()
+    {
+        $data = $this->detailDataFiltered;
+        if (empty($data)) {
+            return [];
+        }
+        $offset = ($this->detailPage - 1) * $this->detailPerPage;
+        return array_slice($data, $offset, $this->detailPerPage);
+    }
+
     public function getDetailTotalPagesProperty()
     {
-        if (empty($this->detailData)) {
+        $data = $this->detailDataFiltered;
+        if (empty($data)) {
             return 1;
         }
-        return ceil(count($this->detailData) / $this->detailPerPage);
+        return ceil(count($data) / $this->detailPerPage);
+    }
+
+    public function updatedDetailSearch()
+    {
+        $this->detailPage = 1;
     }
     
     public function previousDetailPage()
