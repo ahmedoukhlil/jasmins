@@ -234,7 +234,7 @@ class UserManager extends Component
     public function confirmForceDelete($id)
     {
         $this->userToDelete = $id;
-        $this->showForceDeleteModal = true;
+        $this->dispatchBrowserEvent('open-force-delete');
     }
 
     public function forceDeleteUser()
