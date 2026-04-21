@@ -30,6 +30,7 @@ class UserManager extends Component
     // Propriétés pour la modal
     public $showModal = false;
     public $showDeleteModal = false;
+    public $showForceDeleteModal = false;
     public $userToDelete;
 
     // Onglet actif
@@ -87,7 +88,7 @@ class UserManager extends Component
 
     public function render()
     {
-        $query = TUser::where('ismasquer', false);
+        $query = TUser::query();
 
         if ($this->search) {
             $query->where(function($q) {
@@ -228,6 +229,41 @@ class UserManager extends Component
     {
         $this->userToDelete = $id;
         $this->showDeleteModal = true;
+    }
+
+    public function confirmForceDelete($id)
+    {
+        $this->userToDelete = $id;
+        $this->showForceDeleteModal = true;
+    }
+
+    public function forceDeleteUser()
+    {
+        try {
+            $user = TUser::find($this->userToDelete);
+            if ($user) {
+                $user->delete();
+                session()->flash('message', 'Utilisateur supprimé définitivement.');
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'Erreur lors de la suppression définitive.');
+        }
+        $this->showForceDeleteModal = false;
+        $this->userToDelete = null;
+    }
+
+    public function reactivateUser($id)
+    {
+        try {
+            $user = TUser::find($id);
+            if ($user) {
+                $user->ismasquer = false;
+                $user->save();
+                session()->flash('message', 'Utilisateur réactivé avec succès.');
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'Erreur lors de la réactivation.');
+        }
     }
 
     public function deleteUser()

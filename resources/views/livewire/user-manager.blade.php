@@ -121,8 +121,13 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-100">
                 @forelse($users as $user)
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-4 py-3 font-medium text-gray-900">{{ $user->NomComplet }}</td>
+                <tr class="hover:bg-gray-50 transition-colors {{ $user->ismasquer ? 'opacity-60 bg-gray-50' : '' }}">
+                    <td class="px-4 py-3 font-medium text-gray-900">
+                        {{ $user->NomComplet }}
+                        @if($user->ismasquer)
+                            <span class="ml-1 text-xs text-gray-400 italic">(désactivé)</span>
+                        @endif
+                    </td>
                     <td class="px-4 py-3 text-gray-600">{{ $user->login }}</td>
                     <td class="px-4 py-3">
                         @php
@@ -145,16 +150,27 @@
                         </button>
                     </td>
                     <td class="px-4 py-3">
-                        <div class="flex items-center gap-3">
-                            <button wire:click="openModal({{ $user->Iduser }})"
-                                    class="text-blue-600 hover:text-blue-800 text-xs font-medium">
-                                <i class="fas fa-edit mr-0.5"></i> Modifier
-                            </button>
-                            @if($user->IdClasseUser != 3 || $users->where('IdClasseUser', 3)->where('ismasquer', false)->count() > 1)
-                            <button wire:click="confirmDelete({{ $user->Iduser }})"
-                                    class="text-red-500 hover:text-red-700 text-xs font-medium">
-                                <i class="fas fa-trash mr-0.5"></i> Supprimer
-                            </button>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            @if($user->ismasquer)
+                                <button wire:click="reactivateUser({{ $user->Iduser }})"
+                                        class="text-green-600 hover:text-green-800 text-xs font-medium">
+                                    <i class="fas fa-undo mr-0.5"></i> Réactiver
+                                </button>
+                                <button wire:click="confirmForceDelete({{ $user->Iduser }})"
+                                        class="text-red-700 hover:text-red-900 text-xs font-medium">
+                                    <i class="fas fa-trash-alt mr-0.5"></i> Supprimer définitivement
+                                </button>
+                            @else
+                                <button wire:click="openModal({{ $user->Iduser }})"
+                                        class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                                    <i class="fas fa-edit mr-0.5"></i> Modifier
+                                </button>
+                                @if($user->IdClasseUser != 3 || $users->where('IdClasseUser', 3)->where('ismasquer', false)->count() > 1)
+                                <button wire:click="confirmDelete({{ $user->Iduser }})"
+                                        class="text-red-500 hover:text-red-700 text-xs font-medium">
+                                    <i class="fas fa-trash mr-0.5"></i> Supprimer
+                                </button>
+                                @endif
                             @endif
                         </div>
                     </td>
@@ -356,6 +372,30 @@
                     <button wire:click="deleteUser"
                             class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">
                         <i class="fas fa-trash mr-1"></i> Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- ═══════════════════ MODAL SUPPRESSION DÉFINITIVE ═══════════════════ --}}
+    @if($showForceDeleteModal)
+    <div class="modal-overlay" style="z-index:60">
+        <div class="modal-box sm:max-w-md">
+            <div class="modal-header bg-red-700">
+                <h3><i class="fas fa-exclamation-triangle mr-2"></i>Suppression définitive</h3>
+                <button type="button" wire:click="$set('showForceDeleteModal', false)" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-gray-700 mb-2 font-semibold">Cette action est irréversible.</p>
+                <p class="text-sm text-gray-600 mb-6">L'utilisateur sera supprimé définitivement de la base de données. Êtes-vous certain ?</p>
+                <div class="flex justify-end gap-3">
+                    <button wire:click="$set('showForceDeleteModal', false)"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Annuler</button>
+                    <button wire:click="forceDeleteUser"
+                            class="px-4 py-2 bg-red-700 text-white rounded-lg text-sm hover:bg-red-800">
+                        <i class="fas fa-trash-alt mr-1"></i> Supprimer définitivement
                     </button>
                 </div>
             </div>
