@@ -173,7 +173,7 @@ class UserManager extends Component
         $this->validate();
 
         try {
-            $fkidmedecin = $this->fkidmedecin ?: null;
+            $fkidmedecin = $this->fkidmedecin ?: 0;
 
             // Pour médecin/propriétaire, un médecin lié est obligatoire
             if (in_array($this->role, [2, 3]) && !$fkidmedecin) {
