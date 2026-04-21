@@ -166,7 +166,7 @@
                                     <i class="fas fa-edit mr-0.5"></i> Modifier
                                 </button>
                                 @if($user->IdClasseUser != 3 || $users->where('IdClasseUser', 3)->where('ismasquer', false)->count() > 1)
-                                <button wire:click="confirmDelete({{ $user->Iduser }})"
+                                <button wire:click="confirmForceDelete({{ $user->Iduser }})"
                                         class="text-red-500 hover:text-red-700 text-xs font-medium">
                                     <i class="fas fa-trash mr-0.5"></i> Supprimer
                                 </button>
