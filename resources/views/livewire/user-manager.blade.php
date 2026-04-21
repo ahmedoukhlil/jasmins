@@ -357,8 +357,9 @@
     @endif
 
     {{-- ═══════════════════ MODAL SUPPRESSION ═══════════════════ --}}
+    <div x-teleport="body">
     @if($showDeleteModal)
-    <div class="modal-overlay" style="z-index:60">
+    <div class="modal-overlay" style="z-index:9990">
         <div class="modal-box sm:max-w-md">
             <div class="modal-header">
                 <h3><i class="fas fa-exclamation-triangle mr-2"></i>Confirmer la suppression</h3>
@@ -378,10 +379,12 @@
         </div>
     </div>
     @endif
+    </div>
 
     {{-- ═══════════════════ MODAL SUPPRESSION DÉFINITIVE ═══════════════════ --}}
+    <div x-teleport="body">
     @if($showForceDeleteModal)
-    <div class="modal-overlay" style="z-index:60">
+    <div class="modal-overlay" style="z-index:9990">
         <div class="modal-box sm:max-w-md">
             <div class="modal-header bg-red-700">
                 <h3><i class="fas fa-exclamation-triangle mr-2"></i>Suppression définitive</h3>
@@ -402,6 +405,7 @@
         </div>
     </div>
     @endif
+    </div>
 
     {{-- ═══════════════════ ONGLET RÔLES ═══════════════════ --}}
     @if($activeTab === 'roles')
