@@ -385,14 +385,14 @@
     <div x-teleport="body">
     @if($showForceDeleteModal)
     <div class="modal-overlay" style="z-index:9990">
-        <div class="modal-box sm:max-w-md">
+        <div class="modal-box sm:max-w-md" style="max-height:none; overflow:visible;">
             <div class="modal-header bg-red-700">
                 <h3><i class="fas fa-exclamation-triangle mr-2"></i>Suppression définitive</h3>
                 <button type="button" wire:click="$set('showForceDeleteModal', false)" class="modal-close">&times;</button>
             </div>
-            <div class="modal-body">
+            <div style="padding:1.5rem;">
                 <p class="text-sm text-gray-700 mb-2 font-semibold">Cette action est irréversible.</p>
-                <p class="text-sm text-gray-600 mb-6">L'utilisateur sera supprimé définitivement de la base de données. Êtes-vous certain ?</p>
+                <p class="text-sm text-gray-600 mb-4">L'utilisateur sera supprimé définitivement de la base de données. Êtes-vous certain ?</p>
                 <div class="flex justify-end gap-3">
                     <button wire:click="$set('showForceDeleteModal', false)"
                             class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Annuler</button>
