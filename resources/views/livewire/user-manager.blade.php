@@ -357,31 +357,33 @@
     @endif
 
     {{-- ═══════════════════ MODAL SUPPRESSION DÉFINITIVE ═══════════════════ --}}
-    <div
-        x-data="{ get open() { return $wire.showForceDeleteModal } }"
-        x-teleport="body"
+    <dialog id="force-delete-dialog"
+        x-data
+        x-init="
+            $watch('$wire.showForceDeleteModal', val => {
+                val ? $el.showModal() : $el.close();
+            })
+        "
+        style="border:none; border-radius:0.75rem; padding:0; max-width:28rem; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.3);"
+        @cancel.prevent="$wire.set('showForceDeleteModal', false)"
     >
-        <div x-show="open" class="modal-overlay" style="z-index:9990; display:none;">
-            <div class="modal-box sm:max-w-md" style="max-height:none; overflow:visible;">
-                <div class="modal-header bg-red-700">
-                    <h3><i class="fas fa-exclamation-triangle mr-2"></i>Suppression définitive</h3>
-                    <button type="button" @click="$wire.set('showForceDeleteModal', false)" class="modal-close">&times;</button>
-                </div>
-                <div style="padding:1.5rem;">
-                    <p class="text-sm text-gray-700 mb-2 font-semibold">Cette action est irréversible.</p>
-                    <p class="text-sm text-gray-600 mb-4">L'utilisateur sera supprimé définitivement de la base de données. Êtes-vous certain ?</p>
-                    <div class="flex justify-end gap-3">
-                        <button @click="$wire.set('showForceDeleteModal', false)"
-                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Annuler</button>
-                        <button @click="$wire.call('forceDeleteUser')"
-                                class="px-4 py-2 bg-red-700 text-white rounded-lg text-sm hover:bg-red-800">
-                            <i class="fas fa-trash-alt mr-1"></i> Supprimer définitivement
-                        </button>
-                    </div>
-                </div>
+        <div class="modal-header bg-red-700" style="border-radius:0.75rem 0.75rem 0 0;">
+            <h3><i class="fas fa-exclamation-triangle mr-2"></i>Suppression définitive</h3>
+            <button type="button" wire:click="$set('showForceDeleteModal', false)" class="modal-close">&times;</button>
+        </div>
+        <div style="padding:1.5rem;">
+            <p class="text-sm text-gray-700 mb-2 font-semibold">Cette action est irréversible.</p>
+            <p class="text-sm text-gray-600 mb-4">L'utilisateur sera supprimé définitivement de la base de données. Êtes-vous certain ?</p>
+            <div class="flex justify-end gap-3">
+                <button wire:click="$set('showForceDeleteModal', false)"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Annuler</button>
+                <button wire:click="forceDeleteUser"
+                        class="px-4 py-2 bg-red-700 text-white rounded-lg text-sm hover:bg-red-800">
+                    <i class="fas fa-trash-alt mr-1"></i> Supprimer définitivement
+                </button>
             </div>
         </div>
-    </div>
+    </dialog>
 
     {{-- ═══════════════════ ONGLET RÔLES ═══════════════════ --}}
     @if($activeTab === 'roles')
