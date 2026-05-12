@@ -180,7 +180,7 @@
                 <button wire:click="closeModal" class="modal-close"><i class="fas fa-times"></i></button>
             </div>
 
-            <form wire:submit.prevent="save">
+            <form wire:submit.prevent="save" style="display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden;">
                 <div class="modal-body space-y-5">
 
                     <!-- Section: Identité -->
