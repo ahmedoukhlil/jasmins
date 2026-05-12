@@ -4024,6 +4024,7 @@
   padding: .875rem;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 @media (min-width: 640px) {
   .modal-body {
