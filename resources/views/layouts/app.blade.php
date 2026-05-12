@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>SysMedical</title>
+    @php
+        $__cab = \App\Models\Infocabinet::find(Auth::user()->fkidcabinet ?? 0) ?? \App\Models\Infocabinet::first();
+        $__appName = ($__cab && !empty($__cab->nom_application)) ? $__cab->nom_application : 'SysMedical';
+        $__logo = ($__cab && !empty($__cab->logo) && file_exists(public_path($__cab->logo))) ? asset($__cab->logo) : asset('SysMedical.png');
+    @endphp
+    <title>{{ $__appName }}</title>
     <!-- Tailwind CSS compilé -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Alpine.js + app bundle -->
@@ -23,7 +28,7 @@
                 <div class="flex items-center space-x-8">
                     <div class="flex items-center">
                         <a href="{{ route('accueil.patient') }}" class="flex items-center">
-                            <img src="{{ asset('SysMedical.png') }}" alt="SysMedical" class="h-8 w-auto">
+                            <img src="{{ $__logo }}" alt="{{ $__appName }}" class="h-8 w-auto">
                         </a>
                     </div>
                     <!-- Menu desktop -->
