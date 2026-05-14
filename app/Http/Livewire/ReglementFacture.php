@@ -941,95 +941,33 @@ class ReglementFacture extends Component
      */
     protected function deduireStockMedicament(StockMedicament $stock, $quantite, $factureId, $detailId, $libelleMedicament)
     {
-        $cabinetId = Auth::user()->fkidcabinet;
         $userId = Auth::id();
         $medicamentId = $stock->fkidMedicament;
-        
-        // Déduire selon la méthode FIFO
-        $quantiteRestante = $quantite;
-        
-        // Récupérer les lots actifs triés par date d'expiration (FIFO)
-        $lots = LotMedicament::where('fkidStock', $stock->idStock)
-            ->where('Masquer', 0)
-            ->where('quantiteRestante', '>', 0)
-            ->orderBy('dateExpiration', 'asc') // Plus ancien d'abord
-            ->orderBy('dateEntree', 'asc') // En cas d'égalité, plus ancien entrée d'abord
-            ->get();
-        
-        foreach ($lots as $lot) {
-            if ($quantiteRestante <= 0) {
-                break;
-            }
-            
-            $quantiteDuLot = min($quantiteRestante, $lot->quantiteRestante);
-            $lot->quantiteRestante -= $quantiteDuLot;
-            $lot->save();
-            
-            $quantiteRestante -= $quantiteDuLot;
-            
-            // Créer un mouvement de stock pour ce lot
-            $facture = \App\Models\Facture::find($factureId);
-            MouvementStock::create([
-                'fkidStock' => $stock->idStock,
-                'fkidMedicament' => $medicamentId,
-                'fkidLot' => $lot->idLot,
-                'typeMouvement' => 'SORTIE',
-                'quantite' => $quantiteDuLot,
-                'prixUnitaire' => $lot->prixAchatUnitaire ?? $stock->prixAchat,
-                'montantTotal' => ($lot->prixAchatUnitaire ?? $stock->prixAchat) * $quantiteDuLot,
-                'motif' => 'Vente - Facture N°' . ($facture->Nfacture ?? $factureId),
-                'fkidFacture' => $factureId,
-                'fkidDetailFacture' => $detailId,
-                'fkidPatient' => $facture->IDPatient ?? null,
-                'fkidUser' => $userId,
-                'dateMouvement' => Carbon::now(),
-                'reference' => $facture->Nfacture ?? null,
-                'notes' => 'Déduction automatique lors de la facturation'
-            ]);
-        }
-        
-        // Si on n'a pas assez de stock dans les lots, déduire du stock général
-        if ($quantiteRestante > 0) {
-            \Log::warning('Stock insuffisant dans les lots, déduction du stock général', [
-                'medicament_id' => $medicamentId,
-                'quantite_manquante' => $quantiteRestante,
-                'stock_disponible' => $stock->quantiteStock
-            ]);
-            
-            // Déduire du stock général
-            $stock->quantiteStock = max(0, $stock->quantiteStock - $quantiteRestante);
-            $stock->dateDerniereSortie = Carbon::now();
-            $stock->save();
-            
-            // Créer un mouvement de stock sans lot
-            $facture = \App\Models\Facture::find($factureId);
-            MouvementStock::create([
-                'fkidStock' => $stock->idStock,
-                'fkidMedicament' => $medicamentId,
-                'fkidLot' => null,
-                'typeMouvement' => 'SORTIE',
-                'quantite' => $quantiteRestante,
-                'prixUnitaire' => $stock->prixAchat,
-                'montantTotal' => $stock->prixAchat * $quantiteRestante,
-                'motif' => 'Vente - Facture N°' . ($facture->Nfacture ?? $factureId) . ' (Stock général)',
-                'fkidFacture' => $factureId,
-                'fkidDetailFacture' => $detailId,
-                'fkidPatient' => $facture->IDPatient ?? null,
-                'fkidUser' => $userId,
-                'dateMouvement' => Carbon::now(),
-                'reference' => $facture->Nfacture ?? null,
-                'notes' => 'Déduction automatique lors de la facturation (stock général)'
-            ]);
-        } else {
-            // Mettre à jour le stock total en fonction des lots
-            $stockTotalLots = LotMedicament::where('fkidStock', $stock->idStock)
-                ->where('Masquer', 0)
-                ->sum('quantiteRestante');
-            
-            $stock->quantiteStock = $stockTotalLots;
-            $stock->dateDerniereSortie = Carbon::now();
-            $stock->save();
-        }
+        $facture = \App\Models\Facture::find($factureId);
+
+        // Déduire directement de quantiteStock
+        $stock->quantiteStock = max(0, $stock->quantiteStock - $quantite);
+        $stock->dateDerniereSortie = Carbon::now();
+        $stock->save();
+
+        // Enregistrer le mouvement de sortie
+        MouvementStock::create([
+            'fkidStock'          => $stock->idStock,
+            'fkidMedicament'     => $medicamentId,
+            'fkidLot'            => null,
+            'typeMouvement'      => 'SORTIE',
+            'quantite'           => $quantite,
+            'prixUnitaire'       => $stock->prixAchat,
+            'montantTotal'       => $stock->prixAchat * $quantite,
+            'motif'              => 'Vente - Facture N°' . ($facture->Nfacture ?? $factureId),
+            'fkidFacture'        => $factureId,
+            'fkidDetailFacture'  => $detailId,
+            'fkidPatient'        => $facture->IDPatient ?? null,
+            'fkidUser'           => $userId,
+            'dateMouvement'      => Carbon::now(),
+            'reference'          => $facture->Nfacture ?? null,
+            'notes'              => 'Déduction automatique lors de la facturation'
+        ]);
     }
 
     /**
@@ -1084,101 +1022,27 @@ class ReglementFacture extends Component
                 continue;
             }
             
-            // Déduire selon la méthode FIFO
-            $quantiteRestante = $quantiteADeduire;
-            $lotsUtilises = [];
-            
-            // Récupérer les lots actifs triés par date d'expiration (FIFO)
-            $lots = LotMedicament::where('fkidStock', $stock->idStock)
-                ->where('Masquer', 0)
-                ->where('quantiteRestante', '>', 0)
-                ->orderBy('dateExpiration', 'asc') // Plus ancien d'abord
-                ->orderBy('dateEntree', 'asc') // En cas d'égalité, plus ancien entrée d'abord
-                ->get();
-            
-            foreach ($lots as $lot) {
-                if ($quantiteRestante <= 0) {
-                    break;
-                }
-                
-                $quantiteDuLot = min($quantiteRestante, $lot->quantiteRestante);
-                $lot->quantiteRestante -= $quantiteDuLot;
-                $lot->save();
-                
-                $quantiteRestante -= $quantiteDuLot;
-                
-                // Créer un mouvement de stock pour ce lot
-                MouvementStock::create([
-                    'fkidStock' => $stock->idStock,
-                    'fkidMedicament' => $medicamentId,
-                    'fkidLot' => $lot->idLot,
-                    'typeMouvement' => 'SORTIE',
-                    'quantite' => $quantiteDuLot,
-                    'prixUnitaire' => $lot->prixAchatUnitaire ?? $stock->prixAchat,
-                    'montantTotal' => ($lot->prixAchatUnitaire ?? $stock->prixAchat) * $quantiteDuLot,
-                    'motif' => 'Vente - Facture N°' . $facture->Nfacture,
-                    'fkidFacture' => $facture->Idfacture,
-                    'fkidDetailFacture' => $detail->idDetfacture,
-                    'fkidPatient' => $facture->IDPatient,
-                    'fkidUser' => $userId,
-                    'dateMouvement' => Carbon::now(),
-                    'reference' => $facture->Nfacture,
-                    'notes' => 'Déduction automatique lors du paiement complet'
-                ]);
-                
-                $lotsUtilises[] = [
-                    'lot' => $lot,
-                    'quantite' => $quantiteDuLot
-                ];
-            }
-            
-            // Si on n'a pas assez de stock dans les lots, déduire du stock général
-            if ($quantiteRestante > 0) {
-                \Log::warning('Stock insuffisant dans les lots, déduction du stock général', [
-                    'medicament_id' => $medicamentId,
-                    'quantite_manquante' => $quantiteRestante,
-                    'stock_disponible' => $stock->quantiteStock
-                ]);
-                
-                // Déduire du stock général
-                $stock->quantiteStock = max(0, $stock->quantiteStock - $quantiteRestante);
-                $stock->dateDerniereSortie = Carbon::now();
-                $stock->save();
-                
-                // Créer un mouvement de stock sans lot
-                MouvementStock::create([
-                    'fkidStock' => $stock->idStock,
-                    'fkidMedicament' => $medicamentId,
-                    'fkidLot' => null,
-                    'typeMouvement' => 'SORTIE',
-                    'quantite' => $quantiteRestante,
-                    'prixUnitaire' => $stock->prixAchat,
-                    'montantTotal' => $stock->prixAchat * $quantiteRestante,
-                    'motif' => 'Vente - Facture N°' . $facture->Nfacture . ' (Stock général)',
-                    'fkidFacture' => $facture->Idfacture,
-                    'fkidDetailFacture' => $detail->idDetfacture,
-                    'fkidPatient' => $facture->IDPatient,
-                    'fkidUser' => $userId,
-                    'dateMouvement' => Carbon::now(),
-                    'reference' => $facture->Nfacture,
-                    'notes' => 'Déduction automatique lors du paiement complet (stock général)'
-                ]);
-            } else {
-                // Mettre à jour le stock total en fonction des lots
-                $stockTotalLots = LotMedicament::where('fkidStock', $stock->idStock)
-                    ->where('Masquer', 0)
-                    ->sum('quantiteRestante');
-                
-                $stock->quantiteStock = $stockTotalLots;
-                $stock->dateDerniereSortie = Carbon::now();
-                $stock->save();
-            }
-            
-            \Log::info('Stock déduit pour médicament', [
-                'medicament_id' => $medicamentId,
-                'quantite' => $quantiteADeduire,
-                'facture_id' => $facture->Idfacture,
-                'lots_utilises' => count($lotsUtilises)
+            // Déduire directement de quantiteStock
+            $stock->quantiteStock = max(0, $stock->quantiteStock - $quantiteADeduire);
+            $stock->dateDerniereSortie = Carbon::now();
+            $stock->save();
+
+            MouvementStock::create([
+                'fkidStock'         => $stock->idStock,
+                'fkidMedicament'    => $medicamentId,
+                'fkidLot'           => null,
+                'typeMouvement'     => 'SORTIE',
+                'quantite'          => $quantiteADeduire,
+                'prixUnitaire'      => $stock->prixAchat,
+                'montantTotal'      => $stock->prixAchat * $quantiteADeduire,
+                'motif'             => 'Vente - Facture N°' . $facture->Nfacture,
+                'fkidFacture'       => $facture->Idfacture,
+                'fkidDetailFacture' => $detail->idDetfacture,
+                'fkidPatient'       => $facture->IDPatient,
+                'fkidUser'          => $userId,
+                'dateMouvement'     => Carbon::now(),
+                'reference'         => $facture->Nfacture,
+                'notes'             => 'Déduction automatique lors du paiement complet'
             ]);
         }
     }

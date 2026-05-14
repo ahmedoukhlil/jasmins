@@ -38,6 +38,7 @@ class MedicamentManager extends Component
     public $stockMedicamentId;
     public $stockQuantite = 1;
     public $stockPrixAchat = 0;
+    public $stockPrixVente = 0;
     public $stockQuantiteMin = 0;
     public $stockNumeroLot = '';
     public $stockDateExpiration = null;
@@ -249,13 +250,16 @@ class MedicamentManager extends Component
         $this->validate([
             'stockMedicamentId' => 'required|exists:medicaments,IDMedic',
             'stockQuantite' => 'required|integer|min:1',
-            'stockPrixAchat' => 'nullable|numeric|min:0',
+            'stockPrixAchat' => 'required|numeric|min:0',
+            'stockPrixVente' => 'required|numeric|min:0',
             'stockQuantiteMin' => 'required|integer|min:0',
         ], [
             'stockMedicamentId.required' => 'Veuillez sélectionner un médicament',
             'stockQuantite.required' => 'La quantité est requise',
+            'stockPrixAchat.required' => 'Le prix d\'achat est requis',
             'stockPrixAchat.numeric' => 'Le prix d\'achat doit être un nombre',
-            'stockPrixAchat.min' => 'Le prix d\'achat ne peut pas être négatif',
+            'stockPrixVente.required' => 'Le prix de vente est requis',
+            'stockPrixVente.numeric' => 'Le prix de vente doit être un nombre',
             'stockQuantiteMin.required' => 'Le seuil minimum est requis',
         ]);
 
@@ -273,23 +277,10 @@ class MedicamentManager extends Component
                     'quantiteStock' => 0,
                     'quantiteMin' => $this->stockQuantiteMin,
                     'prixAchat' => $this->stockPrixAchat,
-                    'prixVente' => Medicament::find($this->stockMedicamentId)->PrixRef ?? 0,
+                    'prixVente' => $this->stockPrixVente,
                     'Masquer' => 0
                 ]
             );
-
-            // Mettre à jour le prix d'achat moyen (seulement si un prix est fourni)
-            $prixAchatEntree = $this->stockPrixAchat ?? 0;
-            if ($prixAchatEntree > 0 && $stock->quantiteStock > 0) {
-                $nouveauPrixAchat = (($stock->prixAchat * $stock->quantiteStock) + ($prixAchatEntree * $this->stockQuantite)) 
-                                    / ($stock->quantiteStock + $this->stockQuantite);
-            } elseif ($prixAchatEntree > 0) {
-                // Si c'est la première entrée avec un prix
-                $nouveauPrixAchat = $prixAchatEntree;
-            } else {
-                // Si aucun prix n'est fourni, garder le prix actuel
-                $nouveauPrixAchat = $stock->prixAchat;
-            }
 
             // Créer le lot si date d'expiration renseignée
             $lotId = null;
@@ -302,7 +293,7 @@ class MedicamentManager extends Component
                     'quantiteRestante' => $this->stockQuantite,
                     'dateExpiration' => $this->stockDateExpiration,
                     'dateEntree' => Carbon::now(),
-                    'prixAchatUnitaire' => $prixAchatEntree,
+                    'prixAchatUnitaire' => $this->stockPrixAchat,
                     'fournisseur' => $this->stockFournisseur ?: null,
                     'referenceFacture' => $this->stockReferenceFacture ?: null,
                     'fkidUser' => $userId,
@@ -311,10 +302,11 @@ class MedicamentManager extends Component
                 $lotId = $lot->idLot;
             }
 
-            // Mettre à jour le stock
+            // Mettre à jour le stock avec les prix saisis directement
             $stock->update([
                 'quantiteStock' => $stock->quantiteStock + $this->stockQuantite,
-                'prixAchat' => $nouveauPrixAchat,
+                'prixAchat' => $this->stockPrixAchat,
+                'prixVente' => $this->stockPrixVente,
                 'quantiteMin' => $this->stockQuantiteMin,
                 'dateDerniereEntree' => Carbon::now()
             ]);
@@ -326,8 +318,8 @@ class MedicamentManager extends Component
                 'fkidLot' => $lotId,
                 'typeMouvement' => 'ENTREE',
                 'quantite' => $this->stockQuantite,
-                'prixUnitaire' => $prixAchatEntree,
-                'montantTotal' => $prixAchatEntree * $this->stockQuantite,
+                'prixUnitaire' => $this->stockPrixAchat,
+                'montantTotal' => $this->stockPrixAchat * $this->stockQuantite,
                 'motif' => 'Entrée de stock',
                 'fkidUser' => $userId,
                 'dateMouvement' => Carbon::now(),

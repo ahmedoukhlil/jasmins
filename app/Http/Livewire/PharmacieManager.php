@@ -34,6 +34,7 @@ class PharmacieManager extends Component
     public $entreeLibelleMedic = '';
     public $entreeQuantite = 1;
     public $entreePrixAchat = 0;
+    public $entreePrixVente = 0;
     public $entreeQuantiteMin = 0; // Seuil minimum
     public $entreeNumeroLot = '';
     public $entreeDateExpiration = null;
@@ -300,87 +301,23 @@ class PharmacieManager extends Component
         }
 
         DB::transaction(function () use ($stock, $nouvelleQuantite, $ecart, $userId) {
-            if ($ecart < 0) {
-                // Décrément : consommer en FIFO sur les lots
-                $aDecrementer = abs($ecart);
-                $lots = LotMedicament::where('fkidStock', $stock->idStock)
-                    ->where('quantiteRestante', '>', 0)
-                    ->where('Masquer', 0)
-                    ->orderBy('dateEntree', 'asc')
-                    ->lockForUpdate()
-                    ->get();
-
-                foreach ($lots as $lot) {
-                    if ($aDecrementer <= 0) break;
-                    $prelever = min((float)$lot->quantiteRestante, $aDecrementer);
-                    $lot->update(['quantiteRestante' => (float)$lot->quantiteRestante - $prelever]);
-
-                    MouvementStock::create([
-                        'fkidStock' => $stock->idStock,
-                        'fkidMedicament' => $this->ajustementMedicamentId,
-                        'fkidLot' => $lot->idLot,
-                        'typeMouvement' => 'AJUSTEMENT',
-                        'quantite' => -$prelever,
-                        'prixUnitaire' => (float)$lot->prixAchatUnitaire,
-                        'montantTotal' => (float)$lot->prixAchatUnitaire * $prelever,
-                        'motif' => $this->ajustementMotif,
-                        'fkidUser' => $userId,
-                        'dateMouvement' => Carbon::now(),
-                        'reference' => null,
-                        'notes' => 'Ajustement d\'inventaire (-)',
-                    ]);
-                    $aDecrementer -= $prelever;
-                }
-            } else {
-                // Incrément : créer un nouveau lot avec le prix d'achat saisi
-                $prixAchat = (float)$this->ajustementPrixNouveauStock;
-                $lot = LotMedicament::create([
-                    'fkidStock' => $stock->idStock,
-                    'fkidMedicament' => $this->ajustementMedicamentId,
-                    'numeroLot' => null,
-                    'quantiteInitiale' => $ecart,
-                    'quantiteRestante' => $ecart,
-                    'dateExpiration' => null,
-                    'dateEntree' => Carbon::now(),
-                    'prixAchatUnitaire' => $prixAchat,
-                    'fournisseur' => null,
-                    'referenceFacture' => null,
-                    'fkidUser' => $userId,
-                    'Masquer' => 0,
-                ]);
-
-                MouvementStock::create([
-                    'fkidStock' => $stock->idStock,
-                    'fkidMedicament' => $this->ajustementMedicamentId,
-                    'fkidLot' => $lot->idLot,
-                    'typeMouvement' => 'AJUSTEMENT',
-                    'quantite' => $ecart,
-                    'prixUnitaire' => $prixAchat,
-                    'montantTotal' => $prixAchat * $ecart,
-                    'motif' => $this->ajustementMotif,
-                    'fkidUser' => $userId,
-                    'dateMouvement' => Carbon::now(),
-                    'reference' => null,
-                    'notes' => 'Ajustement d\'inventaire (+)',
-                ]);
-            }
-
-            // Recalculer le prix d'achat moyen pondéré à partir des lots restants
-            $lotsRestants = LotMedicament::where('fkidStock', $stock->idStock)
-                ->where('quantiteRestante', '>', 0)
-                ->where('Masquer', 0)
-                ->get();
-            $totalQte = 0;
-            $totalValeur = 0;
-            foreach ($lotsRestants as $l) {
-                $totalQte += (float)$l->quantiteRestante;
-                $totalValeur += (float)$l->quantiteRestante * (float)$l->prixAchatUnitaire;
-            }
-            $prixMoyen = $totalQte > 0 ? $totalValeur / $totalQte : 0;
+            MouvementStock::create([
+                'fkidStock'     => $stock->idStock,
+                'fkidMedicament'=> $this->ajustementMedicamentId,
+                'fkidLot'       => null,
+                'typeMouvement' => 'AJUSTEMENT',
+                'quantite'      => $ecart,
+                'prixUnitaire'  => $stock->prixAchat,
+                'montantTotal'  => $stock->prixAchat * abs($ecart),
+                'motif'         => $this->ajustementMotif,
+                'fkidUser'      => $userId,
+                'dateMouvement' => Carbon::now(),
+                'reference'     => null,
+                'notes'         => 'Ajustement d\'inventaire',
+            ]);
 
             $stock->update([
                 'quantiteStock' => $nouvelleQuantite,
-                'prixAchat' => $prixMoyen,
             ]);
         });
 
@@ -400,6 +337,7 @@ class PharmacieManager extends Component
         $this->entreeLibelleMedic = '';
         $this->entreeQuantite = 1;
         $this->entreePrixAchat = 0;
+        $this->entreePrixVente = 0;
         $this->entreeQuantiteMin = 0;
         $this->entreeNumeroLot = '';
         $this->entreeDateExpiration = null;
@@ -502,12 +440,14 @@ class PharmacieManager extends Component
         $this->validate([
             'entreeMedicamentId' => 'required|integer|exists:medicaments,IDMedic',
             'entreeQuantite' => 'required|integer|min:1',
-            'entreePrixAchat' => 'required|integer|min:0',
+            'entreePrixAchat' => 'required|numeric|min:0',
+            'entreePrixVente' => 'required|numeric|min:0',
             'entreeQuantiteMin' => 'required|integer|min:0',
         ], [
             'entreeMedicamentId.required' => 'Veuillez sélectionner un médicament',
             'entreeQuantite.required' => 'La quantité est requise',
             'entreePrixAchat.required' => 'Le prix d\'achat est requis',
+            'entreePrixVente.required' => 'Le prix de vente est requis',
             'entreeQuantiteMin.required' => 'Le seuil minimum est requis',
         ]);
 
@@ -525,14 +465,10 @@ class PharmacieManager extends Component
                     'quantiteStock' => 0,
                     'quantiteMin' => $this->entreeQuantiteMin,
                     'prixAchat' => $this->entreePrixAchat,
-                    'prixVente' => Medicament::find($this->entreeMedicamentId)->PrixRef ?? 0,
+                    'prixVente' => $this->entreePrixVente,
                     'Masquer' => 0
                 ]
             );
-
-            // Mettre à jour le prix d'achat moyen
-            $nouveauPrixAchat = (($stock->prixAchat * $stock->quantiteStock) + ($this->entreePrixAchat * $this->entreeQuantite)) 
-                                / ($stock->quantiteStock + $this->entreeQuantite);
 
             // Créer le lot si date d'expiration renseignée
             $lotId = null;
@@ -557,8 +493,9 @@ class PharmacieManager extends Component
             // Mettre à jour le stock
             $stock->update([
                 'quantiteStock' => $stock->quantiteStock + $this->entreeQuantite,
-                'prixAchat' => $nouveauPrixAchat,
-                'quantiteMin' => $this->entreeQuantiteMin, // Mettre à jour le seuil minimum
+                'prixAchat' => $this->entreePrixAchat,
+                'prixVente' => $this->entreePrixVente,
+                'quantiteMin' => $this->entreeQuantiteMin,
                 'dateDerniereEntree' => Carbon::now()
             ]);
 
