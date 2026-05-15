@@ -27,9 +27,6 @@ class UserManager extends Component
     public $selectedRole = '';
     public $perPage = 10;
 
-    // Modal conteneur (ouvert depuis l'accueil)
-    public $showManagerModal = false;
-
     // Propriétés pour la modal
     public $showModal = false;
     public $showDeleteModal = false;
@@ -51,17 +48,7 @@ class UserManager extends Component
     public $showRoleDeleteConfirm = false;
     public $roleToDelete = null;
 
-    protected $listeners = ['confirmDelete', 'openUserManager' => 'openManagerModal'];
-
-    public function openManagerModal(): void
-    {
-        $this->showManagerModal = true;
-    }
-
-    public function closeManagerModal(): void
-    {
-        $this->showManagerModal = false;
-    }
+    protected $listeners = ['confirmDelete'];
 
     protected $rules = [
         'login' => 'required|min:3|unique:t_user,login',

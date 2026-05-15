@@ -1,14 +1,4 @@
-@if($showManagerModal)
-<div class="modal-overlay" wire:click.self="closeManagerModal">
-    <div class="modal-box max-w-5xl w-full">
-        <div class="modal-header">
-            <h2><i class="fas fa-users-cog mr-2"></i>Gestion des utilisateurs</h2>
-            <button type="button" wire:click="closeManagerModal" class="modal-close"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body p-0">
-@endif
-
-<div class="{{ $showManagerModal ? 'p-6' : 'p-6' }}">
+<div class="p-6">
 
     {{-- Notifications --}}
     @if (session()->has('message'))
@@ -562,8 +552,3 @@
 
 </div>
 
-@if($showManagerModal)
-        </div>{{-- modal-body --}}
-    </div>{{-- modal-box --}}
-</div>{{-- modal-overlay --}}
-@endif
