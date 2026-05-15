@@ -171,6 +171,38 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/users', function () {
             return view('users.index');
         })->name('users.index');
+
+        // Toggle permission via AJAX (contourne les problèmes Livewire imbriqué)
+        Route::post('/permissions/toggle', function (\Illuminate\Http\Request $request) {
+            $roleId = (int) $request->input('role_id');
+            $permId = (int) $request->input('perm_id');
+
+            if (!$roleId || !$permId) {
+                return response()->json(['error' => 'Paramètres manquants'], 422);
+            }
+
+            $perm = \Illuminate\Support\Facades\DB::table('permissions')->find($permId);
+            if ($roleId === 3 && $perm && str_starts_with($perm->name, 'user.')) {
+                return response()->json(['error' => 'Le propriétaire doit garder les droits utilisateurs.'], 403);
+            }
+
+            $exists = \Illuminate\Support\Facades\DB::table('role_permissions')
+                ->where('role_id', $roleId)->where('permission_id', $permId)->exists();
+
+            if ($exists) {
+                \Illuminate\Support\Facades\DB::table('role_permissions')
+                    ->where('role_id', $roleId)->where('permission_id', $permId)->delete();
+                $newState = false;
+            } else {
+                \Illuminate\Support\Facades\DB::table('role_permissions')
+                    ->insertOrIgnore(['role_id' => $roleId, 'permission_id' => $permId]);
+                $newState = true;
+            }
+
+            \App\Models\TUser::clearPermissionsCache($roleId);
+
+            return response()->json(['checked' => $newState]);
+        })->name('permissions.toggle');
     });
 
     // ─── Routes de test/debug (accès libre aux authentifiés) ────────────────
