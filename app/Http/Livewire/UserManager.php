@@ -213,6 +213,19 @@ class UserManager extends Component
                 if (empty($this->password)) {
                     throw new \Exception('Le mot de passe est requis pour la création d\'un utilisateur');
                 }
+
+                // Si rôle médecin ou docteur propriétaire → créer un médecin et lier
+                if (in_array($this->role, [2, 3]) && !$fkidmedecin) {
+                    $medecinId = DB::table('medecins')->insertGetId([
+                        'Nom'        => $this->nomComplet,
+                        'Contact'    => '',
+                        'DtAjout'    => now(),
+                        'Masquer'    => 0,
+                        'fkidcabinet'=> Auth::user()->fkidcabinet,
+                    ]);
+                    $userData['fkidmedecin'] = $medecinId;
+                }
+
                 $userData['password'] = $this->password;
                 TUser::create($userData);
                 session()->flash('message', 'Utilisateur créé avec succès.');
