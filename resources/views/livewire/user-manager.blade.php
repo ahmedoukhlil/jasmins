@@ -248,7 +248,7 @@
                     $permLabel = is_array($perm) ? $perm['label'] : $perm->label;
                     $permName  = is_array($perm) ? $perm['name']  : $perm->name;
                 @endphp
-                <tr class="border-b border-gray-100 hover:bg-blue-50/40 transition-colors">
+                <tr wire:key="perm-row-{{ $permId }}" class="border-b border-gray-100 hover:bg-blue-50/40 transition-colors">
                     <td class="px-5 py-2.5">
                         <span class="font-medium text-gray-800">{{ $permLabel }}</span>
                         <code class="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{{ $permName }}</code>
@@ -260,8 +260,9 @@
                         $col     = $roleColors[$rId];
                         $checked = !empty($rolePermissions[$rId][$permId]);
                     @endphp
-                    <td class="px-4 py-2.5 text-center">
+                    <td class="px-4 py-2.5 text-center" wire:key="perm-cell-{{ $rId }}-{{ $permId }}">
                         <button wire:click="togglePermission({{ $rId }}, {{ $permId }})"
+                                wire:key="perm-btn-{{ $rId }}-{{ $permId }}"
                                 title="{{ $checked ? 'Retirer' : 'Accorder' }} — {{ $rLibell }}"
                                 class="w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all border-2
                                        {{ $checked

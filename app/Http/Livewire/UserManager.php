@@ -457,8 +457,6 @@ class UserManager extends Component
         // Invalider le cache pour ce rôle
         TUser::clearPermissionsCache($roleId);
 
-        // Rafraîchir la vue
-        $this->loadPermissionsTab();
         $this->emit('toast', ['message' => 'Permissions mises à jour.', 'type' => 'success']);
     }
 } 
