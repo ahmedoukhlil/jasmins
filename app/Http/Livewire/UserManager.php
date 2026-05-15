@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use Livewire\Component;
 use App\Models\TUser;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithPagination;
@@ -175,21 +176,19 @@ class UserManager extends Component
         try {
             $fkidmedecin = $this->fkidmedecin ?: 0;
 
-            // Pour médecin/propriétaire, un médecin lié est obligatoire
-            if (in_array($this->role, [2, 3]) && !$fkidmedecin) {
-                $this->addError('fkidmedecin', 'Veuillez sélectionner un médecin pour ce rôle.');
-                return;
-            }
+
+            // Libellé du rôle pour la colonne "fonction"
+            $roleLibelle = DB::table('typeuser')->where('IdClasseUser0', $this->role)->value('Libelle') ?? 'Utilisateur';
 
             $userData = [
-                'login' => $this->login,
-                'NomComplet' => $this->nomComplet,
+                'login'        => $this->login,
+                'NomComplet'   => $this->nomComplet,
                 'IdClasseUser' => $this->role,
-                'ismasquer' => !$this->isActive,
-                'fonction' => $this->role == 1 ? 'Secrétaire' : ($this->role == 2 ? 'Médecin' : 'Propriétaire'),
-                'fkidmedecin' => $fkidmedecin,
-                'fkidcabinet' => 1,
-                'DtCr' => now(),
+                'ismasquer'    => !$this->isActive,
+                'fonction'     => $roleLibelle,
+                'fkidmedecin'  => $fkidmedecin,
+                'fkidcabinet'  => Auth::user()->fkidcabinet,
+                'DtCr'         => now(),
             ];
 
             if ($this->userId) {
