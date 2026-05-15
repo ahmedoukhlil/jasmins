@@ -262,13 +262,9 @@
                     @endphp
                     <td class="px-4 py-2.5 text-center" wire:key="perm-cell-{{ $rId }}-{{ $permId }}">
                         <button type="button"
-                                data-role="{{ $rId }}"
-                                data-perm="{{ $permId }}"
-                                data-checked="{{ $checked ? '1' : '0' }}"
-                                data-col="{{ $col }}"
-                                onclick="togglePerm(this)"
+                                wire:click="togglePermission({{ $rId }}, {{ $permId }})"
                                 title="{{ $checked ? 'Retirer' : 'Accorder' }} — {{ $rLibell }}"
-                                class="perm-btn w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all border-2
+                                class="w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all border-2
                                        {{ $checked
                                             ? 'bg-'.$col.'-100 border-'.$col.'-400 text-'.$col.'-700 hover:bg-'.$col.'-200'
                                             : 'bg-white border-gray-200 text-gray-300 hover:border-gray-400 hover:text-gray-500' }}">
@@ -556,55 +552,3 @@
 
 </div>
 
-<script>
-function togglePerm(btn) {
-    const roleId  = btn.dataset.role;
-    const permId  = btn.dataset.perm;
-    const checked = btn.dataset.checked === '1';
-    const col     = btn.dataset.col;
-
-    btn.disabled = true;
-    btn.style.opacity = '0.5';
-
-    fetch('{{ route('permissions.toggle') }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({ role_id: roleId, perm_id: permId }),
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.error) {
-            window.showToast && window.showToast(data.error, 'warning');
-            btn.disabled = false;
-            btn.style.opacity = '';
-            return;
-        }
-        const nowChecked = data.checked;
-        btn.dataset.checked = nowChecked ? '1' : '0';
-
-        // Mettre à jour le style du bouton
-        if (nowChecked) {
-            btn.className = `perm-btn w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all border-2 bg-${col}-100 border-${col}-400 text-${col}-700 hover:bg-${col}-200`;
-            btn.querySelector('i').className = 'fas fa-check text-xs';
-            btn.title = btn.title.replace('Accorder', 'Retirer');
-        } else {
-            btn.className = 'perm-btn w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all border-2 bg-white border-gray-200 text-gray-300 hover:border-gray-400 hover:text-gray-500';
-            btn.querySelector('i').className = 'fas fa-times text-xs';
-            btn.title = btn.title.replace('Retirer', 'Accorder');
-        }
-
-        btn.disabled = false;
-        btn.style.opacity = '';
-        window.showToast && window.showToast('Permissions mises à jour.', 'success');
-    })
-    .catch(() => {
-        btn.disabled = false;
-        btn.style.opacity = '';
-        window.showToast && window.showToast('Erreur réseau.', 'error');
-    });
-}
-</script>

@@ -235,9 +235,9 @@
             @endif
 
             @if($u->hasPermission('user.view'))
-            <button wire:click="openUsersModal" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem] justify-center">
+            <a href="{{ route('users.index') }}" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem] justify-center">
                 <i class="fas fa-users-cog"></i> Utilisateurs
-            </button>
+            </a>
             @endif
 
             @if($u->hasPermission('cabinet.manage'))
@@ -694,20 +694,7 @@ $patientId = $selectedPatient
 </div>
 @endif
 
-{{-- Utilisateurs --}}
-@if($showUsersModal)
-<div class="modal-overlay" wire:click.self="closeUsersModal">
-    <div class="modal-box max-w-5xl w-full">
-        <div class="modal-header">
-            <h2><i class="fas fa-users-cog mr-2"></i>Gestion des utilisateurs</h2>
-            <button type="button" wire:click="closeUsersModal" class="modal-close"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body">
-            <livewire:user-manager wire:key="user-manager-modal" />
-        </div>
-    </div>
-</div>
-@endif
+{{-- Utilisateurs: maintenant page dédiée /users --}}
 
 {{-- Conteneur de notifications flottantes --}}
 <div id="salle-notif-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none" style="max-width:320px;"></div>
