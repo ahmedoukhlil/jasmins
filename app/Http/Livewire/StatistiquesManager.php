@@ -18,9 +18,11 @@ class StatistiquesManager extends Component
     public $medecin_id;
     public $date_debut;
     public $date_fin;
-    public $isDocteurProprietaire = false;
-    public $isSecretaire = false;
-    public $isDocteur = false;
+
+    public $canViewAll      = false; // finances.view
+    public $canViewOwn      = false; // finances.own
+    public $canPrintEtat    = false; // finances.view (impression état journalier)
+    public $isOwnOnly       = false;
 
     protected $queryString = [
         'medecin_id' => ['except' => ''],
@@ -34,9 +36,10 @@ class StatistiquesManager extends Component
     public function mount()
     {
         $user = Auth::user();
-        $this->isSecretaire = ($user->IdClasseUser == 1);
-        $this->isDocteur = ($user->IdClasseUser == 2);
-        $this->isDocteurProprietaire = ($user->IdClasseUser == 3);
+        $this->canViewAll   = $user->hasPermission('finances.view');
+        $this->canViewOwn   = $user->hasPermission('finances.own');
+        $this->canPrintEtat = $user->hasPermission('finances.view');
+        $this->isOwnOnly    = $this->canViewOwn && !$this->canViewAll;
     }
 
     public function resetFilters()
@@ -72,36 +75,34 @@ class StatistiquesManager extends Component
         }, 'statistiques.pdf');
     }
 
-    private function getOperations()
+    private function baseQuery()
     {
         $user = Auth::user();
         $query = CaisseOperation::where('fkidcabinet', $user->fkidcabinet);
-        if ($this->medecin_id) {
+
+        if ($this->isOwnOnly) {
+            $query->where('fkidmedecin', $user->fkidmedecin);
+        } elseif ($this->medecin_id) {
             $query->where('fkidmedecin', $this->medecin_id);
         }
+
         if ($this->date_debut) {
             $query->whereDate('dateoper', '>=', $this->date_debut);
         }
         if ($this->date_fin) {
             $query->whereDate('dateoper', '<=', $this->date_fin);
         }
-        return $query->orderBy('dateoper', 'desc')->orderBy('cle', 'desc')->paginate(10);
+        return $query;
+    }
+
+    private function getOperations()
+    {
+        return $this->baseQuery()->orderBy('dateoper', 'desc')->orderBy('cle', 'desc')->paginate(10);
     }
 
     private function getAllOperationsForStats()
     {
-        $user = Auth::user();
-        $query = CaisseOperation::where('fkidcabinet', $user->fkidcabinet);
-        if ($this->medecin_id) {
-            $query->where('fkidmedecin', $this->medecin_id);
-        }
-        if ($this->date_debut) {
-            $query->whereDate('dateoper', '>=', $this->date_debut);
-        }
-        if ($this->date_fin) {
-            $query->whereDate('dateoper', '<=', $this->date_fin);
-        }
-        return $query->get();
+        return $this->baseQuery()->get();
     }
 
     public function render()

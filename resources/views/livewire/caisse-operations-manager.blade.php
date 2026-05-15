@@ -6,22 +6,12 @@
             <i class="fas fa-filter mr-1"></i> Filtres
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            @if($isDocteurProprietaire)
+            @if($isOwnOnly)
             <div>
                 <label class="block text-sm font-medium text-white/80 mb-1">Médecin</label>
-                <select wire:model="medecin_id" class="form-select">
-                    <option value="">Tous les médecins</option>
-                    @foreach($medecins as $medecin)
-                    <option value="{{ $medecin->idMedecin }}">{{ $medecin->Nom }}</option>
-                    @endforeach
-                </select>
+                <input type="text" value="{{ Auth::user()->NomComplet ?? '' }}" disabled class="form-input bg-gray-100 cursor-not-allowed">
             </div>
-            @elseif($isDocteur)
-            <div>
-                <label class="block text-sm font-medium text-white/80 mb-1">Médecin</label>
-                <input type="text" value="{{ Auth::user()->NomComplet ?? Auth::user()->name ?? '' }}" disabled class="form-input bg-gray-100 cursor-not-allowed">
-            </div>
-            @elseif($isSecretaire)
+            @else
             <div>
                 <label class="block text-sm font-medium text-white/80 mb-1">Médecin</label>
                 <select wire:model="medecin_id" class="form-select">
@@ -53,11 +43,11 @@
         <div class="bg-primary px-6 py-4 flex justify-between items-center">
             <h3 class="text-base font-bold text-white flex items-center gap-2">
                 <i class="fas fa-chart-line"></i> Totaux généraux
-                @if($isSecretaire)
-                <span class="badge badge-warning text-xs">Mes paiements uniquement</span>
+                @if($isOwnOnly)
+                <span class="badge badge-warning text-xs">Mes opérations uniquement</span>
                 @endif
             </h3>
-            @if(!$isSecretaire)
+            @if($canViewAll)
             <a href="{{ route('caisse.etat-journalier', ['date' => $date_debut]) }}" target="_blank"
                class="text-sm text-white/80 hover:text-white border border-white/30 px-3 py-1 rounded-lg hover:bg-white/10 transition-colors">
                 <i class="fas fa-print mr-1"></i> Imprimer l'état
@@ -143,8 +133,8 @@
         <div class="bg-primary px-6 py-4 flex justify-between items-center">
             <h3 class="text-base font-bold text-white flex items-center gap-2">
                 <i class="fas fa-list"></i> Liste des opérations
-                @if($isSecretaire)
-                <span class="badge badge-warning text-xs">Mes paiements uniquement</span>
+                @if($isOwnOnly)
+                <span class="badge badge-warning text-xs">Mes opérations uniquement</span>
                 @endif
             </h3>
             <span class="text-white/70 text-sm">
@@ -162,7 +152,7 @@
                         <th>Opération</th>
                         <th>Montant</th>
                         <th>Mode</th>
-                        @if($isDocteurProprietaire || $isDocteur || $isSecretaire)
+                        @if($canDeleteFinances)
                         <th class="text-right">Actions</th>
                         @endif
                     </tr>
@@ -178,7 +168,7 @@
                             {{ number_format($operation->MontantOperation, 0, ',', ' ') }} MRU
                         </td>
                         <td><span class="badge badge-neutral">{{ $operation->TypePAie ?? 'CASH' }}</span></td>
-                        @if($isDocteurProprietaire || $isDocteur || $isSecretaire)
+                        @if($canDeleteFinances)
                         <td class="text-right">
                             @if($operation->entreEspece > 0)
                             <button type="button"
@@ -186,7 +176,7 @@
                                     class="btn-danger text-xs px-2 py-1">
                                 <i class="fas fa-trash-alt"></i> Supprimer
                             </button>
-                            @elseif($operation->retraitEspece > 0 && $isDocteurProprietaire)
+                            @elseif($operation->retraitEspece > 0 && $canViewDepenses)
                             <button type="button"
                                     onclick="if(confirm('Supprimer cette dépense ?')) { @this.call('supprimerDepense', {{ $operation->cle }}); }"
                                     class="btn-danger text-xs px-2 py-1">

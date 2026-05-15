@@ -1058,10 +1058,8 @@ class ReglementFacture extends Component
     public function supprimerFacture($factureId)
     {
         $user = Auth::user();
-        $isDocteurProprietaire = ($user->IdClasseUser ?? null) == 3;
-        
-        if (!$isDocteurProprietaire) {
-            session()->flash('error', 'Vous n\'avez pas les permissions nécessaires pour supprimer une facture.');
+        if (!$user->hasPermission('facture.delete')) {
+            session()->flash('error', 'Vous n\'avez pas la permission de supprimer une facture.');
             return;
         }
         
@@ -1217,8 +1215,6 @@ class ReglementFacture extends Component
     public function render()
     {
         $user = Auth::user();
-        $isDocteur = ($user->IdClasseUser ?? null) == 2;
-        $isDocteurProprietaire = ($user->IdClasseUser ?? null) == 3;
 
         // Charger les factures seulement si nécessaire et si le patient est sélectionné
         $factures = null;
@@ -1230,10 +1226,10 @@ class ReglementFacture extends Component
         }
 
         return view('livewire.reglement-facture', [
-            'isDocteur' => $isDocteur,
-            'isDocteurProprietaire' => $isDocteurProprietaire,
-            'facturesEnAttente' => $this->facturesEnAttente ?? collect(),
-            'factures' => $factures
+            'canDeleteFacture'        => $user->hasPermission('facture.delete'),
+            'canEditFacture'          => $user->hasPermission('facture.edit'),
+            'facturesEnAttente'       => $this->facturesEnAttente ?? collect(),
+            'factures'                => $factures,
         ]);
     }
 } 

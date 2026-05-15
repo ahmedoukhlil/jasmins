@@ -19,9 +19,15 @@ class CaisseOperationsManager extends Component
     public $medecin_id;
     public $date_debut;
     public $date_fin;
-    public $isDocteurProprietaire = false;
-    public $isSecretaire = false;
-    public $isDocteur = false;
+
+    // Permissions RBAC (calculées au mount, jamais hardcodées sur IdClasseUser)
+    public $canViewAll    = false; // finances.view  — voit toutes les opérations
+    public $canViewOwn   = false; // finances.own   — voit uniquement ses propres opérations
+    public $canViewDepenses = false; // depenses.view — voit les dépenses
+    public $canDeleteFinances = false; // finances.delete — peut supprimer
+
+    // Gardés pour la logique de filtre médecin (auto-filtre si finances.own uniquement)
+    public $isOwnOnly    = false;
 
     protected $queryString = [
         'medecin_id' => ['except' => ''],
@@ -38,15 +44,18 @@ class CaisseOperationsManager extends Component
     public function mount()
     {
         $user = Auth::user();
-        $this->isSecretaire = ($user->IdClasseUser == 1);
-        $this->isDocteur = ($user->IdClasseUser == 2);
-        $this->isDocteurProprietaire = ($user->IdClasseUser == 3);
+        $this->canViewAll       = $user->hasPermission('finances.view');
+        $this->canViewOwn       = $user->hasPermission('finances.own');
+        $this->canViewDepenses  = $user->hasPermission('depenses.view');
+        $this->canDeleteFinances= $user->hasPermission('finances.delete');
+
+        // finances.own sans finances.view → filtre automatique sur le médecin connecté
+        $this->isOwnOnly = $this->canViewOwn && !$this->canViewAll;
 
         // Par défaut, filtrer sur la journée courante
-        $today = now()->toDateString();
-        $this->date_debut = $today;
-        
-        if ($this->isDocteur) {
+        $this->date_debut = now()->toDateString();
+
+        if ($this->isOwnOnly && $user->fkidmedecin) {
             $this->medecin_id = $user->fkidmedecin;
         }
     }
@@ -79,11 +88,11 @@ class CaisseOperationsManager extends Component
 
             // Vérifier les permissions
             $user = Auth::user();
-            if ($this->isSecretaire && $operation->fkiduser != $user->Iduser) {
-                session()->flash('error', 'Vous ne pouvez supprimer que vos propres recettes.');
+            if (!$this->canDeleteFinances) {
+                session()->flash('error', 'Vous n\'avez pas la permission de supprimer des opérations.');
                 return;
             }
-            if ($this->isDocteur && $operation->fkidmedecin != $user->fkidmedecin) {
+            if ($this->isOwnOnly && $operation->fkidmedecin != $user->fkidmedecin) {
                 session()->flash('error', 'Vous ne pouvez supprimer que les recettes de vos consultations.');
                 return;
             }
@@ -141,8 +150,8 @@ class CaisseOperationsManager extends Component
     {
         try {
             $user = Auth::user();
-            if (!$this->isDocteurProprietaire) {
-                session()->flash('error', 'Seul le médecin propriétaire peut supprimer une dépense.');
+            if (!$this->canDeleteFinances || !$this->canViewDepenses) {
+                session()->flash('error', 'Vous n\'avez pas la permission de supprimer une dépense.');
                 return;
             }
 
@@ -225,19 +234,14 @@ class CaisseOperationsManager extends Component
             $user = Auth::user();
             $query = CaisseOperation::where('fkidcabinet', $user->fkidcabinet);
 
-            if ($this->isDocteur) {
+            if ($this->isOwnOnly) {
                 $query->where('fkidmedecin', $user->fkidmedecin);
-            } elseif ($this->isSecretaire) {
-                $query->where('fkiduser', $user->Iduser);
-                if ($this->medecin_id) {
-                    $query->where('fkidmedecin', $this->medecin_id);
-                }
-            } else            if ($this->medecin_id) {
+            } elseif ($this->medecin_id) {
                 $query->where('fkidmedecin', $this->medecin_id);
             }
 
-            // Seul le médecin propriétaire peut voir les dépenses
-            if (!$this->isDocteurProprietaire) {
+            // Masquer les dépenses si pas la permission depenses.view
+            if (!$this->canViewDepenses) {
                 $query->where('retraitEspece', 0);
             }
 
@@ -254,19 +258,14 @@ class CaisseOperationsManager extends Component
         $user = Auth::user();
         $query = CaisseOperation::where('fkidcabinet', $user->fkidcabinet);
 
-        if ($this->isDocteur) {
+        if ($this->isOwnOnly) {
             $query->where('fkidmedecin', $user->fkidmedecin);
-        } elseif ($this->isSecretaire) {
-            $query->where('fkiduser', $user->Iduser);
-            if ($this->medecin_id) {
-                $query->where('fkidmedecin', $this->medecin_id);
-            }
         } elseif ($this->medecin_id) {
             $query->where('fkidmedecin', $this->medecin_id);
         }
 
-        // Seul le médecin propriétaire peut voir les dépenses
-        if (!$this->isDocteurProprietaire) {
+        // Masquer les dépenses si pas la permission depenses.view
+        if (!$this->canViewDepenses) {
             $query->where('retraitEspece', 0);
         }
 

@@ -51,7 +51,7 @@
                 <i class="fas fa-chart-line"></i> Totaux généraux
                 <span class="text-sm font-normal text-white/70">({{ $operations->total() }} opérations)</span>
             </h3>
-            @if(!$isSecretaire)
+            @if($canPrintEtat)
             <a href="{{ route('caisse.etat-journalier', ['date' => $date_debut]) }}" target="_blank"
                class="text-sm text-white/80 hover:text-white border border-white/30 px-3 py-1 rounded-lg hover:bg-white/10 transition-colors">
                 <i class="fas fa-print mr-1"></i> Imprimer l'état
@@ -146,8 +146,8 @@
         <div class="bg-primary px-6 py-4 flex justify-between items-center">
             <h3 class="text-base font-bold text-white flex items-center gap-2">
                 <i class="fas fa-list"></i> Liste des opérations
-                @if($isSecretaire)
-                <span class="badge badge-warning text-xs ml-2">Mes paiements uniquement</span>
+                @if($isOwnOnly)
+                <span class="badge badge-warning text-xs ml-2">Mes opérations uniquement</span>
                 @endif
             </h3>
             <span class="text-white/70 text-sm">
