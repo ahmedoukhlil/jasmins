@@ -204,8 +204,8 @@
                                                     </div>
                                                 </div>
 
-                                                {{-- Indicateur stock (médicaments uniquement) --}}
-                                                @if($typeOrdonnance == 1 && !empty($ligne['medicament_id']) && empty($ligne['libre']) && isset($ligne['stock_quantite']))
+                                                {{-- Indicateur stock (médicaments urgence uniquement) --}}
+                                                @if($modeOrdonnance === 'urgence' && $typeOrdonnance == 1 && !empty($ligne['medicament_id']) && empty($ligne['libre']) && isset($ligne['stock_quantite']))
                                                     @php $qte = (int)($ligne['stock_quantite'] ?? 0); @endphp
                                                     @if($qte > 0)
                                                         <div class="mt-1.5 flex items-center gap-1.5 text-xs text-green-700">
@@ -243,7 +243,7 @@
                                                         <div wire:click="selectMedicament({{ $index }}, {{ $item['IDMedic'] }})"
                                                              class="px-3 py-2.5 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors flex items-center justify-between gap-2">
                                                             <span class="font-medium text-gray-900 text-sm">{{ $item['LibelleMedic'] }}</span>
-                                                            @if(($item['PrixRef'] ?? 0) > 0)
+                                                            @if($modeOrdonnance === 'urgence' && ($item['PrixRef'] ?? 0) > 0)
                                                                 <span class="text-xs text-gray-400 shrink-0">{{ number_format($item['PrixRef'], 0) }} MRU</span>
                                                             @endif
                                                         </div>

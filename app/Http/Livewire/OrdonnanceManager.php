@@ -278,8 +278,8 @@ class OrdonnanceManager extends Component
             $this->searchResults[$index]                          = [];
             $this->showSearchResults[$index]                      = false;
 
-            // Charger l'état du stock uniquement pour les médicaments (type 1)
-            if ($this->typeOrdonnance == 1) {
+            // Charger l'état du stock uniquement pour les médicaments en mode urgence
+            if ($this->modeOrdonnance === 'urgence' && $this->typeOrdonnance == 1) {
                 $stock = StockMedicament::where('fkidMedicament', $medicament['IDMedic'])
                     ->where('fkidCabinet', Auth::user()->fkidcabinet)
                     ->where('Masquer', 0)
