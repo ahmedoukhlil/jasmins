@@ -53,6 +53,7 @@ class AccueilPatient extends Component
     public $showUrgenceModal = false;
     public $showDashboardStock = false;
     public $showSalleAttenteModal = false;
+    public $salleAttenteEnArrierePlan = false; // salle d'attente ouverte derrière un autre modal
     public $showSalleSoinsModal = false;
     public $showParametresCabinetModal = false;
     public $showActesPatientModal = false;
@@ -325,7 +326,6 @@ class AccueilPatient extends Component
         $this->showUrgenceModal = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
-        $this->showSalleAttenteModal = false;
 
         // Ouvrir le modal consultation
         $this->showConsultation = true;
@@ -338,6 +338,7 @@ class AccueilPatient extends Component
     public function fermerConsultationModal()
     {
         $this->showConsultation = false;
+        $this->revenirSalleAttente();
     }
 
     public function showReglement()
@@ -428,7 +429,6 @@ class AccueilPatient extends Component
         $this->showConsultation = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
-        $this->showSalleAttenteModal = false;
 
         $this->showDossierMedical = true;
         $this->showPatientMenu = true;
@@ -439,6 +439,7 @@ class AccueilPatient extends Component
     public function fermerDossierMedicalModal()
     {
         $this->showDossierMedical = false;
+        $this->revenirSalleAttente();
     }
 
     public function setPatient($patient)
@@ -783,6 +784,7 @@ class AccueilPatient extends Component
     public function fermerActesPatientModal()
     {
         $this->showActesPatientModal = false;
+        $this->revenirSalleAttente();
     }
 
     public function ouvrirDepuisSalleAttente($patientData)
@@ -793,21 +795,22 @@ class AccueilPatient extends Component
 
         $this->setPatient($patient);
 
-        // Fermer la salle d'attente avant d'ouvrir un autre modal
-        $this->showSalleAttenteModal = false;
-
         // Notifier PatientSearch pour afficher les infos du patient
         $this->emit('setPatientExterne', $patient->ID);
 
-        // Ouvrir directement la bonne section
+        // Ouvrir directement la bonne section (salle d'attente reste en arrière-plan)
         $action = $patientData['action'] ?? null;
         if ($action === 'dossier') {
+            $this->salleAttenteEnArrierePlan = true;
             $this->showDossierMedical();
         } elseif ($action === 'ordonnance') {
+            $this->salleAttenteEnArrierePlan = true;
             $this->ouvrirOrdonnanceModal();
         } elseif ($action === 'consultation') {
+            $this->salleAttenteEnArrierePlan = true;
             $this->showConsultation();
         } elseif ($action === 'actes') {
+            $this->salleAttenteEnArrierePlan = true;
             $this->ouvrirActesPatientModal();
         } elseif ($action === 'select') {
             $this->showPatientMenu = true;
@@ -840,7 +843,6 @@ class AccueilPatient extends Component
         $this->showCaisseOperations = false;
         $this->showDepenses = false;
         $this->showStatistiques = false;
-        $this->showSalleAttenteModal = false;
 
         // Ouvrir le modal ordonnance
         $this->showOrdonnanceModal = true;
@@ -857,6 +859,7 @@ class AccueilPatient extends Component
     {
         $this->showOrdonnanceModal = false;
         $this->showUrgenceModal = false;
+        $this->revenirSalleAttente();
     }
 
     public function ouvrirUrgenceModal()
@@ -878,13 +881,21 @@ class AccueilPatient extends Component
         $this->showDepenses = false;
         $this->showStatistiques = false;
         $this->showOrdonnanceModal = false;
-        $this->showSalleAttenteModal = false;
         $this->showUrgenceModal = true;
     }
 
     public function fermerUrgenceModal()
     {
         $this->showUrgenceModal = false;
+        $this->revenirSalleAttente();
+    }
+
+    private function revenirSalleAttente(): void
+    {
+        if ($this->salleAttenteEnArrierePlan) {
+            $this->showSalleAttenteModal = true;
+            $this->salleAttenteEnArrierePlan = false;
+        }
     }
 
     public function handleOrdonnanceCreated($ordonnanceId)
