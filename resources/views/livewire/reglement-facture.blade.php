@@ -133,7 +133,7 @@
                                             @foreach($details as $detail)
                                                 <tr wire:key="detail-{{ $detail->idDetfacture }}">
                                                     <td class="px-2 py-1">
-                                                        @if(in_array(Auth::user()->IdClasseUser ?? null, [2, 3]))
+                                                        @if(Auth::user()->hasPermission('facture.ligne.delete'))
                                                             <button onclick="event.stopPropagation(); window.confirmAction('Supprimer cet acte ?', '', () => @this.removeActe({{ $detail->idDetfacture }}))"
                                                                 class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded transition-colors"
                                                                 title="Supprimer cet acte">

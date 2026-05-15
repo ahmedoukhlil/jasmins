@@ -40,6 +40,7 @@ class PermissionsSeeder extends Seeder
             ['name' => 'dossier.print',  'label' => 'Imprimer le dossier médical','groupe' => 'Dossier médical', 'ordre' => 41],
 
             // Factures
+            ['name' => 'facture.ligne.delete', 'label' => 'Supprimer un acte de la facture', 'groupe' => 'Factures', 'ordre' => 49],
             ['name' => 'facture.view',     'label' => 'Voir toutes les factures', 'groupe' => 'Factures', 'ordre' => 50],
             ['name' => 'facture.view.own', 'label' => 'Voir ses propres factures','groupe' => 'Factures', 'ordre' => 51],
             ['name' => 'facture.create',   'label' => 'Créer des factures',       'groupe' => 'Factures', 'ordre' => 52],
@@ -133,6 +134,7 @@ class PermissionsSeeder extends Seeder
                 'stock.view',
             ],
             3 => [ // Propriétaire
+                'facture.ligne.delete',
                 'rendez-vous.view',
                 'rendez-vous.create',
                 'rendez-vous.edit',

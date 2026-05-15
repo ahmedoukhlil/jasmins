@@ -694,6 +694,11 @@ class ReglementFacture extends Component
 
     public function removeActe($detailId)
     {
+        if (!\Auth::user()->hasPermission('facture.ligne.delete')) {
+            $this->emit('toast', ['message' => 'Permission insuffisante pour supprimer un acte.', 'type' => 'error']);
+            return;
+        }
+
         try {
             DB::beginTransaction();
 
