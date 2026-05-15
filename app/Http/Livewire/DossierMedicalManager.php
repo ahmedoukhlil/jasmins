@@ -30,7 +30,30 @@ class DossierMedicalManager extends Component
     public $groupe_sanguin = '';
     public $allergies = '';
     public $maladies_chroniques = '';
+    public $maladies_chroniques_selection = [];
+    public $maladies_chroniques_autre = '';
     public $traitements_permanents = '';
+
+    const MALADIES_FREQUENTES = [
+        'Diabète type 1',
+        'Diabète type 2',
+        'HTA',
+        'Insuffisance cardiaque',
+        'Insuffisance rénale',
+        'Asthme',
+        'BPCO',
+        'Épilepsie',
+        'Hypothyroïdie',
+        'Hyperthyroïdie',
+        'Drépanocytose',
+        'Tuberculose',
+        'VIH',
+        'Hépatite B',
+        'Hépatite C',
+        'Ulcère gastrique',
+        'Goutte',
+        'Dyslipidémie',
+    ];
     public $notes_dossier = '';
 
     // --- Nouvelle consultation ---
@@ -117,6 +140,11 @@ class DossierMedicalManager extends Component
             $this->allergies                = $d->allergies ?? '';
             $this->maladies_chroniques      = $d->maladies_chroniques ?? '';
             $this->traitements_permanents   = $d->traitements_permanents ?? '';
+            // Reconstituer la sélection depuis le texte sauvegardé
+            $saved = array_map('trim', explode(',', $this->maladies_chroniques));
+            $this->maladies_chroniques_selection = array_values(array_intersect($saved, self::MALADIES_FREQUENTES));
+            $autres = array_diff($saved, self::MALADIES_FREQUENTES);
+            $this->maladies_chroniques_autre = implode(', ', array_filter($autres));
             $this->notes_dossier            = $d->notes ?? '';
         }
     }
@@ -154,6 +182,13 @@ class DossierMedicalManager extends Component
 
     public function sauvegarderDossier()
     {
+        // Construire maladies_chroniques depuis cases + autre
+        $toutes = array_filter(array_merge(
+            $this->maladies_chroniques_selection,
+            array_map('trim', explode(',', $this->maladies_chroniques_autre))
+        ));
+        $this->maladies_chroniques = implode(', ', $toutes);
+
         DossierMedical::updateOrCreate(
             ['fkidPatient' => $this->patientId, 'fkidCabinet' => Auth::user()->fkidcabinet],
             [

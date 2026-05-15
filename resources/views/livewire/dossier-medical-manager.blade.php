@@ -114,11 +114,31 @@
         {{-- Maladies chroniques + Traitements permanents --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
                     <i class="fas fa-heartbeat text-red-500 mr-1"></i> Maladies chroniques
                 </label>
-                <textarea wire:model="maladies_chroniques" rows="3" placeholder="Diabète, HTA, Asthme..."
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"></textarea>
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50 grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    @foreach(\App\Http\Livewire\DossierMedicalManager::MALADIES_FREQUENTES as $maladie)
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox"
+                            wire:model="maladies_chroniques_selection"
+                            value="{{ $maladie }}"
+                            class="rounded border-gray-300 text-primary focus:ring-primary">
+                        <span>{{ $maladie }}</span>
+                    </label>
+                    @endforeach
+                    {{-- Autre --}}
+                    <label class="flex items-center gap-2 text-sm cursor-pointer col-span-2 mt-1 pt-2 border-t border-gray-200">
+                        <i class="fas fa-pen text-gray-400 text-xs"></i>
+                        <span class="text-gray-500 font-medium">Autre :</span>
+                    </label>
+                    <div class="col-span-2">
+                        <input type="text"
+                            wire:model="maladies_chroniques_autre"
+                            placeholder="Ex: Maladie de Crohn, Lupus..."
+                            class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
