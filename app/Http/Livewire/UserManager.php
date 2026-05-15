@@ -176,6 +176,19 @@ class UserManager extends Component
         try {
             $fkidmedecin = $this->fkidmedecin ?: 0;
 
+            // Docteur Propriétaire unique par cabinet
+            if ($this->role == 3) {
+                $existingProp = DB::table('t_user')
+                    ->where('IdClasseUser', 3)
+                    ->where('fkidcabinet', Auth::user()->fkidcabinet)
+                    ->where('ismasquer', 0)
+                    ->when($this->userId, fn($q) => $q->where('Iduser', '!=', $this->userId))
+                    ->exists();
+                if ($existingProp) {
+                    $this->emit('toast', ['message' => 'Un Docteur Propriétaire existe déjà pour ce cabinet.', 'type' => 'error']);
+                    return;
+                }
+            }
 
             // Libellé du rôle pour la colonne "fonction"
             $roleLibelle = DB::table('typeuser')->where('IdClasseUser0', $this->role)->value('Libelle') ?? 'Utilisateur';
