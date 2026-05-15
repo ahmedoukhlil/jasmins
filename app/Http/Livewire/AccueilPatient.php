@@ -343,6 +343,7 @@ class AccueilPatient extends Component
 
     public function showReglement()
     {
+        if (!$this->requirePermission('facture.view|facture.view.own')) return;
         if (!$this->selectedPatient) return;
         
         // Fermer les autres modals mais garder le menu patient ouvert
@@ -377,6 +378,7 @@ class AccueilPatient extends Component
 
     public function showRendezVous()
     {
+        if (!$this->requirePermission('rendez-vous.view')) return;
         if (!$this->selectedPatient) return;
         
         // Fermer les autres modals mais garder le menu patient ouvert
@@ -411,6 +413,7 @@ class AccueilPatient extends Component
 
     public function showDossierMedical()
     {
+        if (!$this->requirePermission('dossier.view')) return;
         if (!$this->selectedPatient) return;
 
         $this->showAssureurModal = false;
@@ -775,6 +778,7 @@ class AccueilPatient extends Component
 
     public function ouvrirActesPatientModal()
     {
+        if (!$this->requirePermission('act.view')) return;
         if (!$this->selectedPatient) return;
         $this->closeAllSections();
         $this->showActesPatientModal = true;
@@ -976,13 +980,20 @@ class AccueilPatient extends Component
      * Vérifie la permission et affiche un toast d'erreur si refusé.
      * Retourne true si l'accès est autorisé.
      */
+    /**
+     * Vérifie une ou plusieurs permissions (séparées par |, OU logique).
+     * Retourne true si au moins une est accordée.
+     */
     private function requirePermission(string $permission): bool
     {
-        if (!Auth::user()->hasPermission($permission)) {
-            $this->emit('toast', ['message' => 'Accès refusé : permission insuffisante.', 'type' => 'error']);
-            return false;
+        $perms = explode('|', $permission);
+        foreach ($perms as $p) {
+            if (Auth::user()->hasPermission(trim($p))) {
+                return true;
+            }
         }
-        return true;
+        $this->emit('toast', ['message' => 'Accès refusé : permission insuffisante.', 'type' => 'error']);
+        return false;
     }
 
     public function render()

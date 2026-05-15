@@ -114,7 +114,7 @@
         @endif
 
         {{-- Gestion du cabinet --}}
-        @if($u->hasAnyPermission(['medecin.view','assureur.view','act.view','stock.view','pharmacie.view','user.view','cabinet.manage']))
+        @if($u->hasAnyPermission(['medecin.view','assureur.view','act.view','stock.view','pharmacie.view','user.view','medecin.manage']))
         <button wire:click="toggleCabinetMenu"
             class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem] justify-center
                 {{ $showCabinetMenu ? '!bg-primary !text-white !border-primary' : '' }}">
@@ -240,7 +240,7 @@
             </a>
             @endif
 
-            @if($u->hasPermission('cabinet.manage'))
+            @if($u->hasPermission('medecin.manage'))
             <button wire:click="ouvrirParametresCabinet"
                 class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem] justify-center
                     {{ $showParametresCabinetModal ? '!bg-primary !text-white !border-primary' : '' }}">

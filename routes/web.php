@@ -153,7 +153,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ─── Règlement facture ───────────────────────────────────────────────────
-    Route::middleware(['permission:facture.view'])->group(function () {
+    Route::middleware(['permission:facture.view|facture.view.own'])->group(function () {
         Route::get('/reglement-facture', function () {
             return view('reglement-facture');
         })->name('reglement-facture');
