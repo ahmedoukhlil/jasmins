@@ -36,21 +36,21 @@
     @if(!$canCreate)
     <div class="space-y-4">
         <div class="flex items-center gap-2 mb-2 px-1">
-            <i class="fas fa-info-circle text-blue-400"></i>
-            <span class="text-sm text-gray-500">Affichage des ordonnances internes prescrites pour ce patient.</span>
+            <i class="fas fa-bolt text-red-400"></i>
+            <span class="text-sm text-gray-600 font-medium">Traitements d'urgence prescrits pour ce patient</span>
         </div>
 
-        {{-- Médicaments internes --}}
-        <div class="bg-white rounded-xl border border-green-200 overflow-hidden">
+        {{-- Traitements d'urgence --}}
+        <div class="bg-white rounded-xl border border-red-200 overflow-hidden">
             <button wire:click="toggleAccordeon('medicaments')"
-                    class="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all">
+                    class="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 transition-all">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center">
-                        <i class="fas fa-pills text-white text-sm"></i>
+                    <div class="w-9 h-9 bg-red-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-bolt text-white text-sm"></i>
                     </div>
                     <div class="text-left">
-                        <h5 class="font-semibold text-gray-800 text-sm">Médicaments internes</h5>
-                        <p class="text-xs text-gray-500">{{ count($this->getOrdonnancesInternesByType(1)) }} ordonnance(s)</p>
+                        <h5 class="font-semibold text-gray-800 text-sm">Traitements d'urgence</h5>
+                        <p class="text-xs text-gray-500">{{ count($this->getOrdonnancesInternesByType(1)) }} prescription(s)</p>
                     </div>
                 </div>
                 <i class="fas fa-chevron-{{ $accordeonOuvert === 'medicaments' ? 'up' : 'down' }} text-gray-400 text-sm"></i>
@@ -58,22 +58,25 @@
             @if($accordeonOuvert === 'medicaments')
             <div class="p-3 space-y-2">
                 @forelse($this->getOrdonnancesInternesByType(1) as $item)
-                <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3">
                     <p class="text-xs text-gray-500 mb-2">
                         {{ \Carbon\Carbon::parse($item['ref']['dtPrescript'])->format('d/m/Y à H:i') }}
                         — Dr. {{ $item['ref']['prescripteur']['NomComplet'] ?? 'Inconnu' }}
                     </p>
                     @foreach($item['ordonnances'] as $ord)
-                    <div class="text-sm mb-1">
-                        <span class="font-medium text-gray-800">{{ $ord['Libelle'] }}</span>
-                        @if($ord['Utilisation'])
-                        <span class="text-gray-500 ml-2">— {{ $ord['Utilisation'] }}</span>
-                        @endif
+                    <div class="text-sm mb-1 flex items-start gap-2">
+                        <i class="fas fa-syringe text-red-400 mt-0.5 text-xs"></i>
+                        <span>
+                            <span class="font-medium text-gray-800">{{ $ord['Libelle'] }}</span>
+                            @if($ord['Utilisation'])
+                            <span class="text-gray-500 ml-1">— {{ $ord['Utilisation'] }}</span>
+                            @endif
+                        </span>
                     </div>
                     @endforeach
                 </div>
                 @empty
-                <p class="text-sm text-gray-400 text-center py-3">Aucun médicament interne prescrit</p>
+                <p class="text-sm text-gray-400 text-center py-3">Aucun traitement d'urgence prescrit</p>
                 @endforelse
             </div>
             @endif
@@ -95,36 +98,60 @@
 
             <div class="p-4">
                 <form wire:submit.prevent="sauvegarderOrdonnance">
-                    {{-- Sélection du type d'ordonnance --}}
+                    {{-- Choix du mode : Traitement d'urgence / Ordonnance de sortie --}}
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Type d'ordonnance</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button"
+                                    wire:click="changerModeOrdonnance('urgence')"
+                                    class="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all
+                                        {{ $modeOrdonnance === 'urgence' ? 'border-red-500 bg-red-50 text-red-700 font-semibold' : 'border-gray-300 bg-white text-gray-600 hover:border-red-300' }}">
+                                <i class="fas fa-bolt"></i>
+                                <span class="text-sm">Traitement d'urgence</span>
+                            </button>
+                            <button type="button"
+                                    wire:click="changerModeOrdonnance('sortie')"
+                                    class="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all
+                                        {{ $modeOrdonnance === 'sortie' ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold' : 'border-gray-300 bg-white text-gray-600 hover:border-blue-300' }}">
+                                <i class="fas fa-file-prescription"></i>
+                                <span class="text-sm">Ordonnance de sortie</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Pour ordonnance de sortie : choix du type (Médicale / Analyses / Radios) --}}
+                    @if($modeOrdonnance === 'sortie')
+                    <div class="mb-4">
                         <div class="grid grid-cols-3 gap-2">
                             <button type="button"
                                     wire:click="changerTypeOrdonnance(1)"
-                                    class="px-4 py-3 rounded-lg border-2 transition-all {{ $typeOrdonnance == 1 ? 'border-green-600 bg-green-50 text-green-700 font-semibold' : 'border-gray-300 bg-white text-gray-700 hover:border-green-300' }}">
-                                <i class="fas fa-pills mb-1 block"></i>
+                                    class="px-3 py-2 rounded-lg border-2 transition-all text-center {{ $typeOrdonnance == 1 ? 'border-green-600 bg-green-50 text-green-700 font-semibold' : 'border-gray-200 bg-white text-gray-600 hover:border-green-300' }}">
+                                <i class="fas fa-pills mb-1 block text-sm"></i>
                                 <span class="text-xs">Médicale</span>
                             </button>
                             <button type="button"
                                     wire:click="changerTypeOrdonnance(2)"
-                                    class="px-4 py-3 rounded-lg border-2 transition-all {{ $typeOrdonnance == 2 ? 'border-blue-600 bg-blue-50 text-blue-700 font-semibold' : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300' }}">
-                                <i class="fas fa-vial mb-1 block"></i>
+                                    class="px-3 py-2 rounded-lg border-2 transition-all text-center {{ $typeOrdonnance == 2 ? 'border-blue-600 bg-blue-50 text-blue-700 font-semibold' : 'border-gray-200 bg-white text-gray-600 hover:border-blue-300' }}">
+                                <i class="fas fa-vial mb-1 block text-sm"></i>
                                 <span class="text-xs">Analyses</span>
                             </button>
                             <button type="button"
                                     wire:click="changerTypeOrdonnance(3)"
-                                    class="px-4 py-3 rounded-lg border-2 transition-all {{ $typeOrdonnance == 3 ? 'border-purple-600 bg-purple-50 text-purple-700 font-semibold' : 'border-gray-300 bg-white text-gray-700 hover:border-purple-300' }}">
-                                <i class="fas fa-x-ray mb-1 block"></i>
+                                    class="px-3 py-2 rounded-lg border-2 transition-all text-center {{ $typeOrdonnance == 3 ? 'border-purple-600 bg-purple-50 text-purple-700 font-semibold' : 'border-gray-200 bg-white text-gray-600 hover:border-purple-300' }}">
+                                <i class="fas fa-x-ray mb-1 block text-sm"></i>
                                 <span class="text-xs">Radios</span>
                             </button>
                         </div>
-                        @error('typeOrdonnance') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>
+                    @endif
 
                     {{-- Lignes de l'ordonnance --}}
                     <div class="space-y-3">
                         <div class="text-sm font-medium text-gray-700 mb-2">
-                            {{ $this->typeOrdonnanceLibelle }} - Ajoutez une ou plusieurs lignes
+                            @if($modeOrdonnance === 'urgence')
+                                <span class="text-red-600"><i class="fas fa-bolt mr-1"></i>Traitement d'urgence</span> — Médicaments déduits du stock
+                            @else
+                                {{ $this->typeOrdonnanceLibelle }} — Ordonnance de sortie
+                            @endif
                         </div>
                         
                         @foreach($lignesOrdonnance as $index => $ligne)
@@ -156,20 +183,16 @@
                                                         {{ $ligne['medicament_libelle'] }}
                                                     </span>
                                                     <div class="flex items-center gap-2">
-                                                        {{-- Toggle Interne / Externe --}}
-                                                        <button type="button"
-                                                            wire:click="toggleInterne({{ $index }})"
-                                                            title="{{ !empty($ligne['estInterne']) ? 'Cliquer pour passer en Externe' : 'Cliquer pour passer en Interne' }}"
-                                                            class="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full border transition-all
-                                                                {{ !empty($ligne['estInterne'])
-                                                                    ? 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200'
-                                                                    : 'bg-gray-100 text-gray-500 border-gray-300 hover:bg-gray-200' }}">
-                                                            @if(!empty($ligne['estInterne']))
-                                                                <i class="fas fa-clinic-medical text-[9px]"></i> Interne
-                                                            @else
-                                                                <i class="fas fa-external-link-alt text-[9px]"></i> Externe
-                                                            @endif
-                                                        </button>
+                                                        {{-- Badge mode --}}
+                                                        @if($modeOrdonnance === 'urgence')
+                                                            <span class="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700 border border-red-300">
+                                                                <i class="fas fa-bolt text-[9px]"></i> Urgence
+                                                            </span>
+                                                        @else
+                                                            <span class="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700 border border-blue-300">
+                                                                <i class="fas fa-file-prescription text-[9px]"></i> Sortie
+                                                            </span>
+                                                        @endif
                                                         <button type="button"
                                                                 wire:click="clearMedicamentSearch({{ $index }})"
                                                                 class="text-gray-400 hover:text-red-600 transition-colors">

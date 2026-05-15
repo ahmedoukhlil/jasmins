@@ -25,6 +25,9 @@ class OrdonnanceManager extends Component
     // Type d'ordonnance à créer (1=Médicaments, 2=Analyses, 3=Radios)
     public $typeOrdonnance = 1; // Par défaut : Médicaments
 
+    // Mode : 'urgence' (interne, déduit stock) ou 'sortie' (externe, imprimée)
+    public $modeOrdonnance = 'urgence';
+
     // Lignes de l'ordonnance (peut contenir plusieurs lignes du même type)
     public $lignesOrdonnance = [];
 
@@ -146,7 +149,16 @@ class OrdonnanceManager extends Component
     public function changerTypeOrdonnance($type)
     {
         $this->typeOrdonnance = $type;
-        // Réinitialiser les lignes quand on change de type
+        $this->lignesOrdonnance = [];
+        $this->searchTerms = [];
+        $this->searchResults = [];
+        $this->showSearchResults = [];
+        $this->ajouterLigneVide();
+    }
+
+    public function changerModeOrdonnance($mode)
+    {
+        $this->modeOrdonnance = $mode;
         $this->lignesOrdonnance = [];
         $this->searchTerms = [];
         $this->searchResults = [];
@@ -162,7 +174,7 @@ class OrdonnanceManager extends Component
             'posologie'          => '',
             'medicament_libelle' => '',
             'libre'              => false,
-            'estInterne'         => true,
+            'estInterne'         => $this->modeOrdonnance === 'urgence',
             'stock_quantite'     => null,
             'stock_prix'         => null,
         ];
@@ -253,7 +265,7 @@ class OrdonnanceManager extends Component
             $this->lignesOrdonnance[$index]['medicament_id']      = $medicament['IDMedic'];
             $this->lignesOrdonnance[$index]['medicament_libelle'] = $medicament['LibelleMedic'];
             $this->lignesOrdonnance[$index]['libre']              = false;
-            $this->lignesOrdonnance[$index]['estInterne']         = true;
+            $this->lignesOrdonnance[$index]['estInterne']         = $this->modeOrdonnance === 'urgence';
             $this->searchTerms[$index]                            = $medicament['LibelleMedic'];
             $this->searchResults[$index]                          = [];
             $this->showSearchResults[$index]                      = false;
@@ -284,12 +296,6 @@ class OrdonnanceManager extends Component
         $this->lignesOrdonnance[$index]['libre']              = true;
         $this->searchResults[$index]                          = [];
         $this->showSearchResults[$index]                      = false;
-    }
-
-    public function toggleInterne($index)
-    {
-        if (!isset($this->lignesOrdonnance[$index])) return;
-        $this->lignesOrdonnance[$index]['estInterne'] = empty($this->lignesOrdonnance[$index]['estInterne']);
     }
 
     public function clearMedicamentSearch($index)
@@ -359,7 +365,9 @@ class OrdonnanceManager extends Component
                 'fkidprescripteur' => Auth::id(),
                 'dtPrescript' => now(),
                 'fkidCabinet' => Auth::user()->fkidcabinet,
-                'TypeOrdonnance' => $this->typeOrdonnanceLibelle
+                'TypeOrdonnance' => $this->modeOrdonnance === 'urgence'
+                    ? 'Traitement d\'urgence'
+                    : $this->typeOrdonnanceLibelle
             ]);
 
             // Créer les lignes d'ordonnance
@@ -396,13 +404,11 @@ class OrdonnanceManager extends Component
                 ->orderBy('DtFacture', 'desc')
                 ->first();
 
-            $horsStock = []; // médicaments internes sans stock disponible
+            $horsStock = []; // médicaments sans stock disponible
 
-            if ($derniereFacture) {
+            if ($derniereFacture && $this->modeOrdonnance === 'urgence') {
                 foreach ($lignesValides as $ligne) {
-                    // Ignorer les lignes libres, sans médicament, ou marquées externes par le médecin
                     if (!empty($ligne['libre']) || empty($ligne['medicament_id'])) continue;
-                    if (empty($ligne['estInterne'])) continue;
 
                     $medicament = Medicament::find($ligne['medicament_id']);
                     if (!$medicament) continue;
@@ -425,7 +431,7 @@ class OrdonnanceManager extends Component
                             continue;
                         }
 
-                        $prix = $stock->prixVente ?? 0;
+                        $prix = $medicament->PrixRef ?? 0;
 
                         // Décrémenter le stock
                         $stock->quantiteStock     -= $quantite;
@@ -531,6 +537,7 @@ class OrdonnanceManager extends Component
         $this->searchResults = [];
         $this->showSearchResults = [];
         $this->typeOrdonnance = 1;
+        $this->modeOrdonnance = 'urgence';
         $this->ajouterLigneVide();
     }
 
@@ -551,7 +558,7 @@ class OrdonnanceManager extends Component
         foreach ($this->ordonnancesPatient as $ordonnanceRef) {
             // Vérifier le type d'ordonnance selon le libellé
             $typeOrdonnance = match($ordonnanceRef['TypeOrdonnance'] ?? '') {
-                'Ordonnance Médicale' => 1,
+                'Ordonnance Médicale', 'Traitement d\'urgence' => 1,
                 'Ordonnance d\'Analyses' => 2,
                 'Ordonnance de Radiologie' => 3,
                 default => null
