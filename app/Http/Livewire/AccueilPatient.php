@@ -325,7 +325,8 @@ class AccueilPatient extends Component
         $this->showUrgenceModal = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
-        
+        $this->showSalleAttenteModal = false;
+
         // Ouvrir le modal consultation
         $this->showConsultation = true;
         $this->showPatientMenu = true;
@@ -427,6 +428,7 @@ class AccueilPatient extends Component
         $this->showConsultation = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
+        $this->showSalleAttenteModal = false;
 
         $this->showDossierMedical = true;
         $this->showPatientMenu = true;
@@ -790,6 +792,8 @@ class AccueilPatient extends Component
         if (!$patient) return;
 
         $this->setPatient($patient);
+
+        // Fermer la salle d'attente avant d'ouvrir un autre modal
         $this->showSalleAttenteModal = false;
 
         // Notifier PatientSearch pour afficher les infos du patient
@@ -803,9 +807,9 @@ class AccueilPatient extends Component
             $this->ouvrirOrdonnanceModal();
         } elseif ($action === 'consultation') {
             $this->showConsultation();
-        }
-        // 'select' : patient sélectionné, menu patient visible, pas de modal spécifique
-        if ($action === 'select') {
+        } elseif ($action === 'actes') {
+            $this->ouvrirActesPatientModal();
+        } elseif ($action === 'select') {
             $this->showPatientMenu = true;
         }
     }
@@ -836,7 +840,8 @@ class AccueilPatient extends Component
         $this->showCaisseOperations = false;
         $this->showDepenses = false;
         $this->showStatistiques = false;
-        
+        $this->showSalleAttenteModal = false;
+
         // Ouvrir le modal ordonnance
         $this->showOrdonnanceModal = true;
         
@@ -873,7 +878,7 @@ class AccueilPatient extends Component
         $this->showDepenses = false;
         $this->showStatistiques = false;
         $this->showOrdonnanceModal = false;
-        $this->showUrgenceModal = false;
+        $this->showSalleAttenteModal = false;
         $this->showUrgenceModal = true;
     }
 

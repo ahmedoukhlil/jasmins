@@ -144,6 +144,13 @@
                                     class="w-7 h-7 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs">
                                     <i class="fas fa-stethoscope"></i>
                                 </button>
+
+                                {{-- Actes à effectuer --}}
+                                <button wire:click.stop="selectionnerPatient({{ json_encode(['ID' => $patient->ID, 'NomContact' => $patient->NomContact, 'action' => 'actes']) }})"
+                                    title="Actes à effectuer"
+                                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 text-xs">
+                                    <i class="fas fa-procedures"></i>
+                                </button>
                             </div>
                             @endif
                         </div>
