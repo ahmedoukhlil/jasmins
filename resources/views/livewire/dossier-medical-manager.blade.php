@@ -279,29 +279,82 @@
         </div>
 
         {{-- Ordonnances prescrites --}}
+        @php
+            $ordsUrgence = array_filter($ordonnances, fn($o) => ($o['TypeOrdonnance'] ?? '') === "Traitement d'urgence");
+            $ordsSortie  = array_filter($ordonnances, fn($o) => ($o['TypeOrdonnance'] ?? '') !== "Traitement d'urgence");
+        @endphp
+
+        {{-- Traitements d'urgence --}}
+        <div class="border border-red-200 rounded-xl overflow-hidden">
+            <div class="px-4 py-3 bg-red-50 border-b border-red-200 flex items-center justify-between">
+                <h4 class="text-sm font-semibold text-red-700 flex items-center gap-2">
+                    <i class="fas fa-bolt text-red-500"></i>
+                    Traitements d'urgence
+                </h4>
+                <span class="text-xs text-red-400">Médicaments administrés en salle de soin</span>
+            </div>
+            @if(count($ordsUrgence) === 0)
+                <div class="px-4 py-4 text-center text-gray-400 text-sm">
+                    <i class="fas fa-bolt text-2xl mb-1 block text-red-200"></i>
+                    Aucun traitement d'urgence pour ce patient.
+                </div>
+            @else
+                <div class="divide-y divide-red-50 max-h-56 overflow-y-auto">
+                    @foreach($ordsUrgence as $ord)
+                    @php $isChecked = in_array($ord['id'], $ordonnancesSelectionnees ?? []); @endphp
+                    <label class="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-red-50 transition-colors {{ $isChecked ? 'bg-red-50' : '' }}">
+                        <input type="checkbox"
+                            wire:model="ordonnancesSelectionnees"
+                            value="{{ $ord['id'] }}"
+                            class="mt-1 rounded border-red-300 text-red-600 focus:ring-red-500">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+                                    <i class="fas fa-bolt"></i> Urgence
+                                </span>
+                                <span class="text-xs font-mono text-red-600 font-semibold">{{ $ord['refOrd'] }}</span>
+                                <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($ord['dtPrescript'])->format('d/m/Y') }}</span>
+                            </div>
+                            @if(!empty($ord['ordonnances']))
+                            <div class="flex flex-wrap gap-x-3 gap-y-0.5">
+                                @foreach($ord['ordonnances'] as $l)
+                                <span class="text-xs text-gray-600">
+                                    <i class="fas fa-circle text-red-400 text-xs mr-0.5"></i>
+                                    {{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">— {{ $l['Utilisation'] }}</span>@endif
+                                </span>
+                                @endforeach
+                            </div>
+                            @endif
+                        </div>
+                    </label>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        {{-- Ordonnances de sortie --}}
         <div class="border border-gray-200 rounded-xl overflow-hidden">
             <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                 <h4 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <i class="fas fa-prescription text-primary"></i>
+                    <i class="fas fa-file-prescription text-primary"></i>
                     Ordonnances prescrites
                 </h4>
                 <span class="text-xs text-gray-400">Sélectionnez les ordonnances liées à cette consultation</span>
             </div>
-
-            @if(count($ordonnances) === 0)
-                <div class="px-4 py-6 text-center text-gray-400 text-sm">
-                    <i class="fas fa-prescription text-2xl mb-2 block"></i>
-                    Aucune ordonnance disponible pour ce patient.
+            @if(count($ordsSortie) === 0)
+                <div class="px-4 py-4 text-center text-gray-400 text-sm">
+                    <i class="fas fa-file-prescription text-2xl mb-1 block"></i>
+                    Aucune ordonnance de sortie pour ce patient.
                 </div>
             @else
-                <div class="divide-y divide-gray-100 max-h-72 overflow-y-auto">
-                    @foreach($ordonnances as $ord)
+                <div class="divide-y divide-gray-100 max-h-56 overflow-y-auto">
+                    @foreach($ordsSortie as $ord)
                     @php
-                        $typeIcon  = match($ord['TypeOrdonnance'] ?? '') {
-                            'Ordonnance Médicale'      => ['icon' => 'fa-pills',  'color' => 'green',  'label' => 'Médicaments'],
-                            "Ordonnance d'Analyses"    => ['icon' => 'fa-flask',  'color' => 'blue',   'label' => 'Analyses'],
-                            'Ordonnance de Radiologie' => ['icon' => 'fa-x-ray', 'color' => 'purple', 'label' => 'Radiologie'],
-                            default                    => ['icon' => 'fa-file-medical', 'color' => 'gray', 'label' => 'Ordonnance'],
+                        $typeIcon = match($ord['TypeOrdonnance'] ?? '') {
+                            'Ordonnance Médicale'      => ['icon' => 'fa-pills',       'color' => 'green',  'label' => 'Médicaments'],
+                            "Ordonnance d'Analyses"    => ['icon' => 'fa-flask',       'color' => 'blue',   'label' => 'Analyses'],
+                            'Ordonnance de Radiologie' => ['icon' => 'fa-x-ray',      'color' => 'purple', 'label' => 'Radiologie'],
+                            default                    => ['icon' => 'fa-file-medical','color' => 'gray',   'label' => 'Ordonnance'],
                         };
                         $isChecked = in_array($ord['id'], $ordonnancesSelectionnees ?? []);
                     @endphp
@@ -567,38 +620,73 @@
                     {{-- Ordonnances liées --}}
                     @if(!empty($c['ordonnances_ids']) && count($c['ordonnances_ids']) > 0)
                     @php
-                        $ordsLiees = array_filter($ordonnances, fn($o) => in_array($o['id'], $c['ordonnances_ids']));
+                        $ordsLiees         = array_filter($ordonnances, fn($o) => in_array($o['id'], $c['ordonnances_ids']));
+                        $ordsLieesUrgence  = array_filter($ordsLiees, fn($o) => ($o['TypeOrdonnance'] ?? '') === "Traitement d'urgence");
+                        $ordsLieesSortie   = array_filter($ordsLiees, fn($o) => ($o['TypeOrdonnance'] ?? '') !== "Traitement d'urgence");
                     @endphp
                     @if(count($ordsLiees) > 0)
-                    <div>
-                        <h5 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ordonnances prescrites</h5>
-                        <div class="space-y-2">
-                        @foreach($ordsLiees as $ord)
-                        @php
-                            $meta = match($ord['TypeOrdonnance'] ?? '') {
-                                'Ordonnance Médicale'      => ['icon' => 'fa-pills',        'color' => 'green',  'label' => 'Médicaments'],
-                                "Ordonnance d'Analyses"    => ['icon' => 'fa-flask',        'color' => 'blue',   'label' => 'Analyses'],
-                                'Ordonnance de Radiologie' => ['icon' => 'fa-x-ray',       'color' => 'purple', 'label' => 'Radiologie'],
-                                default                    => ['icon' => 'fa-file-medical', 'color' => 'gray',   'label' => 'Ordonnance'],
-                            };
-                        @endphp
-                        <div class="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-                            <span class="inline-flex items-center gap-1 text-xs font-semibold text-{{ $meta['color'] }}-700 bg-{{ $meta['color'] }}-100 px-2 py-0.5 rounded-full flex-shrink-0">
-                                <i class="fas {{ $meta['icon'] }}"></i> {{ $meta['label'] }}
-                            </span>
-                            <span class="text-xs font-mono text-primary">{{ $ord['refOrd'] }}</span>
-                            <div class="flex-1 flex flex-wrap gap-x-3 gap-y-0.5">
-                                @foreach($ord['ordonnances'] ?? [] as $l)
-                                <span class="text-xs text-gray-600">{{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">— {{ $l['Utilisation'] }}</span>@endif</span>
-                                @endforeach
+                    <div class="space-y-3">
+
+                        {{-- Traitements d'urgence --}}
+                        @if(count($ordsLieesUrgence) > 0)
+                        <div>
+                            <h5 class="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2 flex items-center gap-1">
+                                <i class="fas fa-bolt"></i> Traitements d'urgence
+                            </h5>
+                            <div class="space-y-1">
+                            @foreach($ordsLieesUrgence as $ord)
+                            <div class="flex items-start gap-2 bg-red-50 rounded-lg px-3 py-2 border border-red-100">
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                                    <i class="fas fa-bolt"></i> Urgence
+                                </span>
+                                <span class="text-xs font-mono text-red-600">{{ $ord['refOrd'] }}</span>
+                                <div class="flex-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                                    @foreach($ord['ordonnances'] ?? [] as $l)
+                                    <span class="text-xs text-gray-600">{{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">— {{ $l['Utilisation'] }}</span>@endif</span>
+                                    @endforeach
+                                </div>
                             </div>
-                            <a href="{{ route('ordonnance.print', ['id' => $ord['id']]) }}" target="_blank"
-                               class="text-xs text-gray-400 hover:text-primary flex-shrink-0">
-                                <i class="fas fa-print"></i>
-                            </a>
+                            @endforeach
+                            </div>
                         </div>
-                        @endforeach
+                        @endif
+
+                        {{-- Ordonnances de sortie --}}
+                        @if(count($ordsLieesSortie) > 0)
+                        <div>
+                            <h5 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                                <i class="fas fa-file-prescription"></i> Ordonnances prescrites
+                            </h5>
+                            <div class="space-y-1">
+                            @foreach($ordsLieesSortie as $ord)
+                            @php
+                                $meta = match($ord['TypeOrdonnance'] ?? '') {
+                                    'Ordonnance Médicale'      => ['icon' => 'fa-pills',        'color' => 'green',  'label' => 'Médicaments'],
+                                    "Ordonnance d'Analyses"    => ['icon' => 'fa-flask',        'color' => 'blue',   'label' => 'Analyses'],
+                                    'Ordonnance de Radiologie' => ['icon' => 'fa-x-ray',       'color' => 'purple', 'label' => 'Radiologie'],
+                                    default                    => ['icon' => 'fa-file-medical', 'color' => 'gray',   'label' => 'Ordonnance'],
+                                };
+                            @endphp
+                            <div class="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-{{ $meta['color'] }}-700 bg-{{ $meta['color'] }}-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                                    <i class="fas {{ $meta['icon'] }}"></i> {{ $meta['label'] }}
+                                </span>
+                                <span class="text-xs font-mono text-primary">{{ $ord['refOrd'] }}</span>
+                                <div class="flex-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                                    @foreach($ord['ordonnances'] ?? [] as $l)
+                                    <span class="text-xs text-gray-600">{{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">— {{ $l['Utilisation'] }}</span>@endif</span>
+                                    @endforeach
+                                </div>
+                                <a href="{{ route('ordonnance.print', ['id' => $ord['id']]) }}" target="_blank"
+                                   class="text-xs text-gray-400 hover:text-primary flex-shrink-0">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                            </div>
+                            @endforeach
+                            </div>
                         </div>
+                        @endif
+
                     </div>
                     @endif
                     @endif
