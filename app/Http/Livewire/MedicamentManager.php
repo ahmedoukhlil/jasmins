@@ -38,7 +38,6 @@ class MedicamentManager extends Component
     public $stockMedicamentId;
     public $stockQuantite = 1;
     public $stockPrixAchat = 0;
-    public $stockPrixVente = 0;
     public $stockQuantiteMin = 0;
     public $stockNumeroLot = '';
     public $stockDateExpiration = null;
@@ -251,15 +250,12 @@ class MedicamentManager extends Component
             'stockMedicamentId' => 'required|exists:medicaments,IDMedic',
             'stockQuantite' => 'required|integer|min:1',
             'stockPrixAchat' => 'required|numeric|min:0',
-            'stockPrixVente' => 'required|numeric|min:0',
             'stockQuantiteMin' => 'required|integer|min:0',
         ], [
             'stockMedicamentId.required' => 'Veuillez sélectionner un médicament',
             'stockQuantite.required' => 'La quantité est requise',
             'stockPrixAchat.required' => 'Le prix d\'achat est requis',
             'stockPrixAchat.numeric' => 'Le prix d\'achat doit être un nombre',
-            'stockPrixVente.required' => 'Le prix de vente est requis',
-            'stockPrixVente.numeric' => 'Le prix de vente doit être un nombre',
             'stockQuantiteMin.required' => 'Le seuil minimum est requis',
         ]);
 
@@ -277,7 +273,6 @@ class MedicamentManager extends Component
                     'quantiteStock' => 0,
                     'quantiteMin' => $this->stockQuantiteMin,
                     'prixAchat' => $this->stockPrixAchat,
-                    'prixVente' => $this->stockPrixVente,
                     'Masquer' => 0
                 ]
             );
@@ -302,11 +297,10 @@ class MedicamentManager extends Component
                 $lotId = $lot->idLot;
             }
 
-            // Mettre à jour le stock avec les prix saisis directement
+            // Mettre à jour le stock avec le prix saisi directement
             $stock->update([
                 'quantiteStock' => $stock->quantiteStock + $this->stockQuantite,
                 'prixAchat' => $this->stockPrixAchat,
-                'prixVente' => $this->stockPrixVente,
                 'quantiteMin' => $this->stockQuantiteMin,
                 'dateDerniereEntree' => Carbon::now()
             ]);

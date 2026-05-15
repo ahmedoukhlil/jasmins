@@ -34,7 +34,6 @@ class PharmacieManager extends Component
     public $entreeLibelleMedic = '';
     public $entreeQuantite = 1;
     public $entreePrixAchat = 0;
-    public $entreePrixVente = 0;
     public $entreeQuantiteMin = 0; // Seuil minimum
     public $entreeNumeroLot = '';
     public $entreeDateExpiration = null;
@@ -337,7 +336,6 @@ class PharmacieManager extends Component
         $this->entreeLibelleMedic = '';
         $this->entreeQuantite = 1;
         $this->entreePrixAchat = 0;
-        $this->entreePrixVente = 0;
         $this->entreeQuantiteMin = 0;
         $this->entreeNumeroLot = '';
         $this->entreeDateExpiration = null;
@@ -441,13 +439,11 @@ class PharmacieManager extends Component
             'entreeMedicamentId' => 'required|integer|exists:medicaments,IDMedic',
             'entreeQuantite' => 'required|integer|min:1',
             'entreePrixAchat' => 'required|numeric|min:0',
-            'entreePrixVente' => 'required|numeric|min:0',
             'entreeQuantiteMin' => 'required|integer|min:0',
         ], [
             'entreeMedicamentId.required' => 'Veuillez sélectionner un médicament',
             'entreeQuantite.required' => 'La quantité est requise',
             'entreePrixAchat.required' => 'Le prix d\'achat est requis',
-            'entreePrixVente.required' => 'Le prix de vente est requis',
             'entreeQuantiteMin.required' => 'Le seuil minimum est requis',
         ]);
 
@@ -465,7 +461,6 @@ class PharmacieManager extends Component
                     'quantiteStock' => 0,
                     'quantiteMin' => $this->entreeQuantiteMin,
                     'prixAchat' => $this->entreePrixAchat,
-                    'prixVente' => $this->entreePrixVente,
                     'Masquer' => 0
                 ]
             );
@@ -494,7 +489,6 @@ class PharmacieManager extends Component
             $stock->update([
                 'quantiteStock' => $stock->quantiteStock + $this->entreeQuantite,
                 'prixAchat' => $this->entreePrixAchat,
-                'prixVente' => $this->entreePrixVente,
                 'quantiteMin' => $this->entreeQuantiteMin,
                 'dateDerniereEntree' => Carbon::now()
             ]);

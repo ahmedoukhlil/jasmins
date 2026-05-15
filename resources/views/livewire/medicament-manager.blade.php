@@ -218,11 +218,6 @@
                             @error('stockPrixAchat') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Prix de vente unitaire *</label>
-                            <input type="number" step="0.01" wire:model.defer="stockPrixVente" class="form-input" min="0">
-                            @error('stockPrixVente') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        </div>
-                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Seuil minimum *</label>
                             <input type="number" wire:model.defer="stockQuantiteMin" class="form-input" min="0" required>
                             @error('stockQuantiteMin') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
