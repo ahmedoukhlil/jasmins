@@ -265,7 +265,7 @@ class OrdonnanceManager extends Component
                     ->where('Masquer', 0)
                     ->first();
                 $this->lignesOrdonnance[$index]['stock_quantite'] = $stock ? (int)$stock->quantiteStock : 0;
-                $this->lignesOrdonnance[$index]['stock_prix']     = $stock ? $stock->prixVente : null;
+                $this->lignesOrdonnance[$index]['stock_prix']     = $medicament['PrixRef'] ?? null;
             } else {
                 $this->lignesOrdonnance[$index]['stock_quantite'] = null;
                 $this->lignesOrdonnance[$index]['stock_prix']     = null;
