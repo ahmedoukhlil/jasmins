@@ -348,8 +348,8 @@ $patientId = $selectedPatient
 {{-- Traitement d'urgence --}}
 @if($showUrgenceModal && $selectedPatient)
 <div class="modal-overlay" wire:click.self="fermerUrgenceModal">
-    <div class="modal-box max-w-2xl w-full">
-        <div class="modal-header" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+    <div class="modal-box max-w-5xl w-full">
+        <div class="modal-header">
             <div>
                 <h2><i class="fas fa-bolt mr-2"></i>Traitement d'urgence</h2>
                 <p>{{ $patientNom }}</p>
