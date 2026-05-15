@@ -50,6 +50,7 @@ class AccueilPatient extends Component
     public $showCabinetMenu = false;
     public $showPatientMenu = false;
     public $showOrdonnanceModal = false;
+    public $showUrgenceModal = false;
     public $showDashboardStock = false;
     public $showSalleAttenteModal = false;
     public $showSalleSoinsModal = false;
@@ -321,6 +322,7 @@ class AccueilPatient extends Component
         $this->showDepenses = false;
         $this->showStatistiques = false;
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
         
@@ -354,6 +356,7 @@ class AccueilPatient extends Component
         $this->showDepenses = false;
         $this->showStatistiques = false;
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
         $this->showConsultation = false;
         $this->showRendezVous = false;
         
@@ -387,6 +390,7 @@ class AccueilPatient extends Component
         $this->showDepenses = false;
         $this->showStatistiques = false;
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
         $this->showConsultation = false;
         $this->showReglement = false;
         
@@ -419,6 +423,7 @@ class AccueilPatient extends Component
         $this->showDepenses = false;
         $this->showStatistiques = false;
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
         $this->showConsultation = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
@@ -458,6 +463,7 @@ class AccueilPatient extends Component
         $this->showReglement = false;
         $this->showRendezVous = false;
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
     }
 
     // Gestionnaires d'événements
@@ -537,6 +543,7 @@ class AccueilPatient extends Component
         $this->showDepenses = false;
         $this->showStatistiques = false;
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
         $this->showConsultation = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
@@ -570,6 +577,7 @@ class AccueilPatient extends Component
         $this->showCaisseOperations = false;
         $this->showStatistiques = false;
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
         $this->showConsultation = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
@@ -656,6 +664,7 @@ class AccueilPatient extends Component
         $this->showCaisseOperations = false;
         $this->showDepenses = false;
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
         $this->showConsultation = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
@@ -708,6 +717,7 @@ class AccueilPatient extends Component
         $this->showDepenses = false;
         $this->showStatistiques = false;
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
         $this->showConsultation = false;
         $this->showReglement = false;
         $this->showRendezVous = false;
@@ -841,6 +851,35 @@ class AccueilPatient extends Component
     public function fermerOrdonnanceModal()
     {
         $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
+    }
+
+    public function ouvrirUrgenceModal()
+    {
+        if (!$this->requirePermission('ordonnance.create')) return;
+        if (!$this->selectedPatient) {
+            session()->flash('error', 'Veuillez sélectionner un patient.');
+            return;
+        }
+        $this->showAssureurModal = false;
+        $this->showListeActesModal = false;
+        $this->showListeMedicamentsModal = false;
+        $this->showUsersModal = false;
+        $this->showMedecinsModal = false;
+        $this->showTypePaiementModal = false;
+        $this->showCreateRdvModal = false;
+        $this->showCreatePatientModal = false;
+        $this->showCaisseOperations = false;
+        $this->showDepenses = false;
+        $this->showStatistiques = false;
+        $this->showOrdonnanceModal = false;
+        $this->showUrgenceModal = false;
+        $this->showUrgenceModal = true;
+    }
+
+    public function fermerUrgenceModal()
+    {
+        $this->showUrgenceModal = false;
     }
 
     public function handleOrdonnanceCreated($ordonnanceId)

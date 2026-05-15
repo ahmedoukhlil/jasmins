@@ -98,7 +98,8 @@
 
             <div class="p-4">
                 <form wire:submit.prevent="sauvegarderOrdonnance">
-                    {{-- Choix du mode : Traitement d'urgence / Ordonnance de sortie --}}
+                    {{-- Choix du mode : masqué si mode forcé --}}
+                    @if(!$modeForce)
                     <div class="mb-4">
                         <div class="grid grid-cols-2 gap-2">
                             <button type="button"
@@ -117,6 +118,7 @@
                             </button>
                         </div>
                     </div>
+                    @endif
 
                     {{-- Pour ordonnance de sortie : choix du type (Médicale / Analyses / Radios) --}}
                     @if($modeOrdonnance === 'sortie')

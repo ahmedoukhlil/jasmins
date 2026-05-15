@@ -28,6 +28,9 @@ class OrdonnanceManager extends Component
     // Mode : 'urgence' (interne, déduit stock) ou 'sortie' (externe, imprimée)
     public $modeOrdonnance = 'urgence';
 
+    // Si défini, le mode est forcé et le choix est masqué
+    public $modeForce = null;
+
     // Lignes de l'ordonnance (peut contenir plusieurs lignes du même type)
     public $lignesOrdonnance = [];
 
@@ -80,10 +83,15 @@ class OrdonnanceManager extends Component
                 } elseif (is_object($patient)) {
                     $this->patientId = $patient->ID ?? $patient->id ?? null;
                 }
-                
+
                 if ($this->patientId) {
                     $this->loadOrdonnancesPatient();
                 }
+            }
+
+            // Appliquer le mode forcé si fourni
+            if ($this->modeForce) {
+                $this->modeOrdonnance = $this->modeForce;
             }
 
             // Initialiser une ligne vide

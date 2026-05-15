@@ -152,6 +152,10 @@
             @endif
 
             @if($u->hasPermission('ordonnance.create'))
+            <button wire:click="ouvrirUrgenceModal" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
+                <i class="fas fa-bolt"></i>
+                <span>Trt. Urgence</span>
+            </button>
             <button wire:click="ouvrirOrdonnanceModal" type="button" class="patient-nav-button nav-button flex items-center gap-2 px-4 py-2.5 min-w-[9rem] border-2 rounded-xl text-sm font-semibold justify-center">
                 <i class="fas fa-file-prescription"></i>
                 <span>Ordonnances</span>
@@ -336,6 +340,24 @@ $patientId = $selectedPatient
         </div>
         <div class="modal-body">
             <livewire:create-rendez-vous wire:key="rendez-vous-modal-{{ $patientId }}" :patient="$selectedPatient" />
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Traitement d'urgence --}}
+@if($showUrgenceModal && $selectedPatient)
+<div class="modal-overlay" wire:click.self="fermerUrgenceModal">
+    <div class="modal-box max-w-2xl w-full">
+        <div class="modal-header" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+            <div>
+                <h2><i class="fas fa-bolt mr-2"></i>Traitement d'urgence</h2>
+                <p>{{ $patientNom }}</p>
+            </div>
+            <button type="button" wire:click="fermerUrgenceModal" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <livewire:ordonnance-manager wire:key="urgence-modal-{{ $patientId }}" :patient="$selectedPatient" :mode-force="'urgence'" />
         </div>
     </div>
 </div>
