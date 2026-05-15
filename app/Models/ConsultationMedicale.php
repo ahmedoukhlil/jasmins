@@ -21,6 +21,7 @@ class ConsultationMedicale extends Model
         'tension_arterielle',
         'frequence_cardiaque',
         'spo2',
+        'gad',
         'poids',
         'taille',
         'examen_clinique',

@@ -64,6 +64,7 @@ class DossierMedicalManager extends Component
     public $tension_arterielle = '';
     public $frequence_cardiaque = '';
     public $spo2 = '';
+    public $gad = '';
     public $poids = '';
     public $taille = '';
     public $examen_clinique = '';
@@ -265,6 +266,7 @@ class DossierMedicalManager extends Component
                 'tension_arterielle'    => $this->tension_arterielle,
                 'frequence_cardiaque'   => $this->frequence_cardiaque,
                 'spo2'                  => $this->spo2,
+                'gad'                   => $this->gad,
                 'poids'                 => $this->poids,
                 'taille'                => $this->taille,
                 'examen_clinique'       => $this->examen_clinique,
@@ -288,7 +290,7 @@ class DossierMedicalManager extends Component
     private function resetConsultationForm()
     {
         $this->motif = $this->temperature = $this->tension_arterielle = '';
-        $this->frequence_cardiaque = $this->spo2 = $this->poids = $this->taille = '';
+        $this->frequence_cardiaque = $this->spo2 = $this->gad = $this->poids = $this->taille = '';
         $this->examen_clinique = $this->diagnostic = $this->conduite_a_tenir = $this->notes_consultation = '';
         $this->medicaments = [];
         $this->examens = [];

@@ -242,6 +242,11 @@
                     <input wire:model="spo2" type="text" placeholder="98%"
                         class="w-full text-center text-sm border border-cyan-200 rounded px-2 py-1 focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 bg-white">
                 </div>
+                <div class="bg-yellow-50 rounded-lg p-3 border border-yellow-100 text-center">
+                    <div class="text-xs text-gray-500 mb-1"><i class="fas fa-tint text-yellow-500"></i> GAD (g/L)</div>
+                    <input wire:model="gad" type="text" placeholder="1.10 g/L"
+                        class="w-full text-center text-sm border border-yellow-200 rounded px-2 py-1 focus:ring-1 focus:ring-yellow-400 focus:border-yellow-400 bg-white">
+                </div>
                 <div class="bg-green-50 rounded-lg p-3 border border-green-100 text-center">
                     <div class="text-xs text-gray-500 mb-1"><i class="fas fa-weight text-green-400"></i> Poids (kg)</div>
                     <input wire:model="poids" type="text" placeholder="70 kg"
@@ -458,7 +463,7 @@
                 <div class="p-4 border-t border-gray-100 bg-white space-y-4">
 
                     {{-- Constantes vitales --}}
-                    @if(!empty($c['temperature']) || !empty($c['tension_arterielle']) || !empty($c['frequence_cardiaque']) || !empty($c['spo2']) || !empty($c['poids']) || !empty($c['taille']))
+                    @if(!empty($c['temperature']) || !empty($c['tension_arterielle']) || !empty($c['frequence_cardiaque']) || !empty($c['spo2']) || !empty($c['gad']) || !empty($c['poids']) || !empty($c['taille']))
                     <div>
                         <h5 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Constantes vitales</h5>
                         <div class="flex flex-wrap gap-2">
@@ -480,6 +485,11 @@
                             @if(!empty($c['spo2']))
                                 <span class="inline-flex items-center gap-1 text-sm bg-cyan-50 text-cyan-800 px-3 py-1 rounded-full border border-cyan-100">
                                     <i class="fas fa-lungs text-cyan-400"></i> SpO2 : {{ $c['spo2'] }}
+                                </span>
+                            @endif
+                            @if(!empty($c['gad']))
+                                <span class="inline-flex items-center gap-1 text-sm bg-yellow-50 text-yellow-800 px-3 py-1 rounded-full border border-yellow-100">
+                                    <i class="fas fa-tint text-yellow-500"></i> GAD : {{ $c['gad'] }} g/L
                                 </span>
                             @endif
                             @if(!empty($c['poids']))
