@@ -97,6 +97,12 @@
     <!-- Conteneur de toasts -->
     <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
+    @auth
+    @if(Auth::user()->hasPermission('user.view'))
+    @livewire('user-manager')
+    @endif
+    @endauth
+
     @livewireScripts
 
 

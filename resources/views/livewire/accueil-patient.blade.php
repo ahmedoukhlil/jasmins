@@ -235,9 +235,9 @@
             @endif
 
             @if($u->hasPermission('user.view'))
-            <a href="{{ route('users.index') }}" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem] justify-center">
+            <button wire:click="$emit('openUserManager')" class="nav-button btn-secondary text-sm px-4 py-2.5 min-w-[9rem] justify-center">
                 <i class="fas fa-users-cog"></i> Utilisateurs
-            </a>
+            </button>
             @endif
 
             @if($u->hasPermission('cabinet.manage'))
