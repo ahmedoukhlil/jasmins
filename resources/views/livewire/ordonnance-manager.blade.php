@@ -120,8 +120,8 @@
                     </div>
                     @endif
 
-                    {{-- Pour ordonnance de sortie : choix du type (Médicale / Analyses / Radios) --}}
-                    @if($modeOrdonnance === 'sortie')
+                    {{-- Choix du type (Médicale / Analyses / Radios) --}}
+                    @if(true)
                     <div class="mb-4">
                         <div class="grid grid-cols-3 gap-2">
                             <button type="button"
@@ -150,7 +150,8 @@
                     <div class="space-y-3">
                         <div class="text-sm font-medium text-gray-700 mb-2">
                             @if($modeOrdonnance === 'urgence')
-                                <span class="text-red-600"><i class="fas fa-bolt mr-1"></i>Traitement d'urgence</span> — Médicaments déduits du stock
+                                <span class="text-red-600"><i class="fas fa-bolt mr-1"></i>Traitement d'urgence</span>
+                                — @if($typeOrdonnance == 1) Médicaments déduits du stock @elseif($typeOrdonnance == 2) Analyses @else Radiologie @endif
                             @else
                                 {{ $this->typeOrdonnanceLibelle }} — Ordonnance de sortie
                             @endif
