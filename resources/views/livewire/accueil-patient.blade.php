@@ -695,19 +695,19 @@ $patientId = $selectedPatient
 @endif
 
 {{-- Utilisateurs --}}
-<div class="modal-overlay {{ $showUsersModal ? '' : 'hidden' }}" wire:click.self="closeUsersModal">
+@if($showUsersModal)
+<div class="modal-overlay" wire:click.self="closeUsersModal">
     <div class="modal-box max-w-5xl w-full">
         <div class="modal-header">
             <h2><i class="fas fa-users-cog mr-2"></i>Gestion des utilisateurs</h2>
             <button type="button" wire:click="closeUsersModal" class="modal-close"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-            @if($u->hasPermission('user.view'))
             <livewire:user-manager wire:key="user-manager-modal" />
-            @endif
         </div>
     </div>
 </div>
+@endif
 
 {{-- Conteneur de notifications flottantes --}}
 <div id="salle-notif-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none" style="max-width:320px;"></div>
