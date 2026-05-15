@@ -798,19 +798,23 @@ class AccueilPatient extends Component
         // Notifier PatientSearch pour afficher les infos du patient
         $this->emit('setPatientExterne', $patient->ID);
 
-        // Ouvrir directement la bonne section (salle d'attente reste en arrière-plan)
+        // Ouvrir directement la bonne section (salle d'attente en arrière-plan)
         $action = $patientData['action'] ?? null;
         if ($action === 'dossier') {
             $this->salleAttenteEnArrierePlan = true;
+            $this->showSalleAttenteModal = false;
             $this->showDossierMedical();
         } elseif ($action === 'ordonnance') {
             $this->salleAttenteEnArrierePlan = true;
+            $this->showSalleAttenteModal = false;
             $this->ouvrirOrdonnanceModal();
         } elseif ($action === 'consultation') {
             $this->salleAttenteEnArrierePlan = true;
+            $this->showSalleAttenteModal = false;
             $this->showConsultation();
         } elseif ($action === 'actes') {
             $this->salleAttenteEnArrierePlan = true;
+            $this->showSalleAttenteModal = false;
             $this->ouvrirActesPatientModal();
         } elseif ($action === 'select') {
             $this->showPatientMenu = true;
