@@ -709,8 +709,7 @@
 
                     {{-- Actions --}}
                     <div class="flex justify-end pt-2">
-                        <button wire:click="supprimerConsultation({{ $c['id'] }})"
-                            onclick="return window.confirmAction ? window.confirmAction(event, 'Supprimer cette consultation ?') : confirm('Supprimer cette consultation ?')"
+                        <button wire:click="confirmSupprimerConsultation({{ $c['id'] }})"
                             class="btn-danger text-xs px-3 py-1.5 flex items-center gap-1">
                             <i class="fas fa-trash-alt"></i> Supprimer
                         </button>
@@ -890,8 +889,7 @@
                                     class="text-gray-500 hover:text-primary px-2 py-1 rounded border border-gray-200 hover:border-primary transition-colors text-xs">
                                     <i class="fas fa-download"></i>
                                 </a>
-                                <button wire:click="supprimerAnalyse({{ $a['id'] }})"
-                                    onclick="return window.confirmAction ? window.confirmAction(event, 'Supprimer ce fichier ?') : confirm('Supprimer ce fichier ?')"
+                                <button wire:click="confirmSupprimerAnalyse({{ $a['id'] }})"
                                     class="text-red-400 hover:text-red-600 px-2 py-1 rounded border border-gray-200 hover:border-red-300 transition-colors text-xs">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
@@ -961,5 +959,72 @@
     </div>
     @endif
 
+    {{-- Modal confirmation suppression consultation --}}
+    @if($showConfirmDeleteConsultation)
+    <div class="modal-overlay" style="z-index:80">
+        <div class="modal-box sm:max-w-md">
+            <div class="modal-header" style="background:#dc2626">
+                <h3><i class="fas fa-exclamation-triangle mr-2"></i>Supprimer cette consultation ?</h3>
+                <button type="button" wire:click="$set('showConfirmDeleteConsultation', false)" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-notes-medical text-red-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Cette consultation et toutes ses données seront supprimées définitivement. Cette action est <strong>irréversible</strong>.</p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                    <button wire:click="$set('showConfirmDeleteConsultation', false)"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
+                        Annuler
+                    </button>
+                    <button wire:click="supprimerConsultation"
+                            wire:loading.attr="disabled"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 flex items-center gap-2 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="supprimerConsultation"><i class="fas fa-trash mr-1"></i> Supprimer</span>
+                        <span wire:loading wire:target="supprimerConsultation"><i class="fas fa-spinner fa-spin mr-1"></i> Suppression...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal confirmation suppression analyse/fichier --}}
+    @if($showConfirmDeleteAnalyse)
+    <div class="modal-overlay" style="z-index:80">
+        <div class="modal-box sm:max-w-md">
+            <div class="modal-header" style="background:#dc2626">
+                <h3><i class="fas fa-exclamation-triangle mr-2"></i>Supprimer ce fichier ?</h3>
+                <button type="button" wire:click="$set('showConfirmDeleteAnalyse', false)" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-file-medical text-red-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Ce fichier sera supprimé définitivement du serveur. Cette action est <strong>irréversible</strong>.</p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                    <button wire:click="$set('showConfirmDeleteAnalyse', false)"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
+                        Annuler
+                    </button>
+                    <button wire:click="supprimerAnalyse"
+                            wire:loading.attr="disabled"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 flex items-center gap-2 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="supprimerAnalyse"><i class="fas fa-trash mr-1"></i> Supprimer</span>
+                        <span wire:loading wire:target="supprimerAnalyse"><i class="fas fa-spinner fa-spin mr-1"></i> Suppression...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
 </div>

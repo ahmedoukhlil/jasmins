@@ -13,6 +13,9 @@ class TypePaiementManager extends Component
     public $type_id = null;
     public $LibPaie = '';
     public $editMode = false;
+    public $showDeleteConfirm = false;
+    public $typeToDeleteId = null;
+    public $typeToDeleteNom = '';
 
     protected $rules = [
         'LibPaie' => 'required|string|max:255',
@@ -61,14 +64,27 @@ class TypePaiementManager extends Component
         }
     }
 
-    public function deleteTypePaiement($id)
+    public function confirmDeleteTypePaiement($id)
     {
         $type = RefTypePaiement::find($id);
+        if ($type) {
+            $this->typeToDeleteId  = $id;
+            $this->typeToDeleteNom = $type->LibPaie;
+            $this->showDeleteConfirm = true;
+        }
+    }
+
+    public function deleteTypePaiement()
+    {
+        $type = RefTypePaiement::find($this->typeToDeleteId);
         if ($type) {
             $type->delete();
             $this->resetForm();
             $this->resetPage();
         }
+        $this->showDeleteConfirm = false;
+        $this->typeToDeleteId    = null;
+        $this->typeToDeleteNom   = '';
     }
 
     public function render()

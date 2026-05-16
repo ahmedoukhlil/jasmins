@@ -19,6 +19,12 @@ class DossierMedicalManager extends Component
     use WithFileUploads;
     public $patient;
     public $patientId;
+
+    // Confirmation suppression
+    public $showConfirmDeleteConsultation = false;
+    public $confirmDeleteConsultationId   = null;
+    public $showConfirmDeleteAnalyse      = false;
+    public $confirmDeleteAnalyseId        = null;
     // Onglet actif : 'dossier' | 'nouvelle_consultation' | 'historique'
     public $onglet = 'dossier';
 
@@ -298,13 +304,22 @@ class DossierMedicalManager extends Component
         $this->date_consultation = now()->format('Y-m-d\TH:i');
     }
 
-    public function supprimerConsultation($id)
+    public function confirmSupprimerConsultation($id)
     {
+        $this->confirmDeleteConsultationId   = $id;
+        $this->showConfirmDeleteConsultation = true;
+    }
+
+    public function supprimerConsultation($id = null)
+    {
+        $id = $id ?? $this->confirmDeleteConsultationId;
         $c = ConsultationMedicale::find($id);
         if ($c && $c->fkidCabinet == Auth::user()->fkidcabinet) {
             $c->delete();
             $this->loadConsultations();
         }
+        $this->showConfirmDeleteConsultation = false;
+        $this->confirmDeleteConsultationId   = null;
     }
 
     public function toggleConsultation($id)
@@ -379,8 +394,15 @@ class DossierMedicalManager extends Component
         }
     }
 
-    public function supprimerAnalyse($id)
+    public function confirmSupprimerAnalyse($id)
     {
+        $this->confirmDeleteAnalyseId   = $id;
+        $this->showConfirmDeleteAnalyse = true;
+    }
+
+    public function supprimerAnalyse($id = null)
+    {
+        $id = $id ?? $this->confirmDeleteAnalyseId;
         $a = AnalysePatient::find($id);
         if ($a && $a->fkidCabinet == Auth::user()->fkidcabinet) {
             Storage::disk('public')->delete($a->fichier_path);
@@ -390,6 +412,8 @@ class DossierMedicalManager extends Component
                 $this->analysePreviewId = null;
             }
         }
+        $this->showConfirmDeleteAnalyse = false;
+        $this->confirmDeleteAnalyseId   = null;
     }
 
     public function previewAnalyse($id)

@@ -29,6 +29,12 @@ class CaisseOperationsManager extends Component
     // Gardés pour la logique de filtre médecin (auto-filtre si finances.own uniquement)
     public $isOwnOnly    = false;
 
+    // Confirmation suppression
+    public $showConfirmDelete = false;
+    public $confirmDeleteType = null; // 'recette' ou 'depense'
+    public $confirmDeleteId   = null;
+    public $confirmDeleteLabel = '';
+
     protected $queryString = [
         'medecin_id' => ['except' => ''],
         'date_debut' => ['except' => ''],
@@ -71,6 +77,35 @@ class CaisseOperationsManager extends Component
      * Annule toute la recette sur la facture (TotReglPatient et/ou ReglementPEC) avant suppression.
      * Pour les factures assurées, le montant est réparti proportionnellement entre Patient et PEC.
      */
+    public function confirmSupprimerRecette($operationId, $label = '')
+    {
+        $this->confirmDeleteType  = 'recette';
+        $this->confirmDeleteId    = $operationId;
+        $this->confirmDeleteLabel = $label ?: 'cette recette';
+        $this->showConfirmDelete  = true;
+    }
+
+    public function confirmSupprimerDepense($operationId, $label = '')
+    {
+        $this->confirmDeleteType  = 'depense';
+        $this->confirmDeleteId    = $operationId;
+        $this->confirmDeleteLabel = $label ?: 'cette dépense';
+        $this->showConfirmDelete  = true;
+    }
+
+    public function executeDelete()
+    {
+        if ($this->confirmDeleteType === 'recette') {
+            $this->supprimerRecette($this->confirmDeleteId);
+        } elseif ($this->confirmDeleteType === 'depense') {
+            $this->supprimerDepense($this->confirmDeleteId);
+        }
+        $this->showConfirmDelete  = false;
+        $this->confirmDeleteId    = null;
+        $this->confirmDeleteType  = null;
+        $this->confirmDeleteLabel = '';
+    }
+
     public function supprimerRecette($operationId)
     {
         try {

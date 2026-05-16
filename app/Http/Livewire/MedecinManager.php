@@ -15,6 +15,9 @@ class MedecinManager extends Component
     public $Nom = '';
     public $Contact = '';
     public $editMode = false;
+    public $showDeleteConfirm = false;
+    public $medecinToDeleteId = null;
+    public $medecinToDeleteNom = '';
 
     protected $rules = [
         'Nom' => 'required|string|max:255',
@@ -70,14 +73,27 @@ class MedecinManager extends Component
         }
     }
 
-    public function deleteMedecin($id)
+    public function confirmDeleteMedecin($id)
     {
         $medecin = Medecin::find($id);
+        if ($medecin) {
+            $this->medecinToDeleteId  = $id;
+            $this->medecinToDeleteNom = $medecin->Nom;
+            $this->showDeleteConfirm  = true;
+        }
+    }
+
+    public function deleteMedecin()
+    {
+        $medecin = Medecin::find($this->medecinToDeleteId);
         if ($medecin) {
             $medecin->delete();
             $this->resetForm();
             $this->resetPage();
         }
+        $this->showDeleteConfirm  = false;
+        $this->medecinToDeleteId  = null;
+        $this->medecinToDeleteNom = '';
     }
 
     public function render()

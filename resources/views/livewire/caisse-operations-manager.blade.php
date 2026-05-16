@@ -172,13 +172,13 @@
                         <td class="text-right">
                             @if($operation->entreEspece > 0)
                             <button type="button"
-                                    onclick="if(confirm('Supprimer cette recette ? Le règlement sera annulé sur la facture associée.')) { @this.call('supprimerRecette', {{ $operation->cle }}); }"
+                                    wire:click="confirmSupprimerRecette({{ $operation->cle }}, '{{ addslashes($operation->designation) }}')"
                                     class="btn-danger text-xs px-2 py-1">
                                 <i class="fas fa-trash-alt"></i> Supprimer
                             </button>
                             @elseif($operation->retraitEspece > 0 && $canViewDepenses)
                             <button type="button"
-                                    onclick="if(confirm('Supprimer cette dépense ?')) { @this.call('supprimerDepense', {{ $operation->cle }}); }"
+                                    wire:click="confirmSupprimerDepense({{ $operation->cle }}, '{{ addslashes($operation->designation) }}')"
                                     class="btn-danger text-xs px-2 py-1">
                                 <i class="fas fa-trash-alt"></i> Supprimer
                             </button>
@@ -200,6 +200,45 @@
         <i class="fas fa-cash-register text-3xl mb-3 block text-primary/40"></i>
         <p class="font-medium">Aucune opération trouvée</p>
         <p class="text-sm mt-1">Sélectionnez une date pour voir les opérations.</p>
+    </div>
+    @endif
+
+    {{-- Modal confirmation suppression --}}
+    @if($showConfirmDelete)
+    <div class="modal-overlay" style="z-index:80">
+        <div class="modal-box sm:max-w-md">
+            <div class="modal-header" style="background:#dc2626">
+                <h3><i class="fas fa-exclamation-triangle mr-2"></i>Confirmer la suppression</h3>
+                <button type="button" wire:click="$set('showConfirmDelete', false)" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-trash-alt text-red-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">{{ $confirmDeleteLabel }}</p>
+                        @if($confirmDeleteType === 'recette')
+                        <p class="text-sm text-gray-500 mt-1">Le règlement sera <strong>annulé</strong> sur la facture associée. Cette action est <strong>irréversible</strong>.</p>
+                        @else
+                        <p class="text-sm text-gray-500 mt-1">Cette dépense sera supprimée définitivement. Cette action est <strong>irréversible</strong>.</p>
+                        @endif
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                    <button wire:click="$set('showConfirmDelete', false)"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
+                        Annuler
+                    </button>
+                    <button wire:click="executeDelete"
+                            wire:loading.attr="disabled"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 flex items-center gap-2 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="executeDelete"><i class="fas fa-trash mr-1"></i> Supprimer</span>
+                        <span wire:loading wire:target="executeDelete"><i class="fas fa-spinner fa-spin mr-1"></i> Suppression...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     @endif
 

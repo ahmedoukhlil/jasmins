@@ -49,8 +49,7 @@
                         <button wire:click="editMedecin({{ $medecin->idMedecin }})" class="text-primary hover:text-primary-dark text-sm font-medium mr-3">
                             <i class="fas fa-edit"></i> Modifier
                         </button>
-                        <button wire:click="deleteMedecin({{ $medecin->idMedecin }})"
-                                onclick="return confirm('Supprimer ce médecin ?')"
+                        <button wire:click="confirmDeleteMedecin({{ $medecin->idMedecin }})"
                                 class="text-red-600 hover:text-red-800 text-sm font-medium">
                             <i class="fas fa-trash"></i> Supprimer
                         </button>
@@ -67,5 +66,40 @@
         </table>
     </div>
     <div class="mt-4">{{ $medecins->links() }}</div>
+
+    {{-- Modal confirmation suppression médecin --}}
+    @if($showDeleteConfirm)
+    <div class="modal-overlay" style="z-index:70">
+        <div class="modal-box sm:max-w-md">
+            <div class="modal-header" style="background:#dc2626">
+                <h3><i class="fas fa-exclamation-triangle mr-2"></i>Supprimer ce médecin ?</h3>
+                <button type="button" wire:click="$set('showDeleteConfirm', false)" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-user-md text-red-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">{{ $medecinToDeleteNom }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Cette action est <strong>irréversible</strong>.</p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                    <button wire:click="$set('showDeleteConfirm', false)"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
+                        Annuler
+                    </button>
+                    <button wire:click="deleteMedecin"
+                            wire:loading.attr="disabled"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 flex items-center gap-2 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="deleteMedecin"><i class="fas fa-trash mr-1"></i> Supprimer</span>
+                        <span wire:loading wire:target="deleteMedecin"><i class="fas fa-spinner fa-spin mr-1"></i> Suppression...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
 </div>
