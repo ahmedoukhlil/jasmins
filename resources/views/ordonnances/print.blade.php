@@ -247,10 +247,19 @@
         .page.a5 .header-ar { font-size: 9px; }
         .page.a5 .header-fr .cabinet-name,
         .page.a5 .header-ar .cabinet-name { font-size: 11px; }
-        .page.a5 .patient-section { padding: 7px 10px; margin-bottom: 10px; }
-        .page.a5 .doc-header { margin-bottom: 10px; padding-bottom: 8px; }
-        .page.a5 .ord-title { margin: 10px 0 12px 0; }
+        .page.a5 .doc-header { margin-bottom: 8px; padding-bottom: 6px; }
+        .page.a5 .ord-title { margin: 8px 0 10px 0; }
         .page.a5 .footer-note { font-size: 8px; }
+
+        /* Section patient compactée en A5 */
+        .page.a5 .patient-section { padding: 5px 8px; margin-bottom: 6px; font-size: 10px; }
+        .page.a5 .patient-label { font-size: 9px; min-width: 80px; }
+        .page.a5 .patient-value { font-size: 9px; }
+        .page.a5 .patient-row { margin-bottom: 3px; gap: 4px; }
+        .page.a5 .medication-dosage { font-size: 10px; }
+        .page.a5 .medication-num { width: 18px; height: 18px; line-height: 18px; font-size: 9px; }
+        .page.a5 .footer-signature .sig-label { font-size: 9px; margin-bottom: 20px; }
+        .page.a5 .footer-signature .sig-line { font-size: 9px; }
     </style>
 
     <style id="page-size-style">
