@@ -271,11 +271,19 @@
                                         @enderror
                                     </div>
                                     <div>
+                                        @if($typeOrdonnance == 3)
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Demande</label>
+                                        <textarea wire:model.defer="lignesOrdonnance.{{ $index }}.posologie"
+                                                  placeholder="Ex: Radio du thorax de face et profil..."
+                                                  rows="3"
+                                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm resize-y"></textarea>
+                                        @else
                                         <label class="block text-xs font-medium text-gray-700 mb-1">Posologie / Instructions</label>
                                         <input type="text"
                                                wire:model.defer="lignesOrdonnance.{{ $index }}.posologie"
-                                               placeholder="@if($typeOrdonnance == 1)Ex: 1 comprimé matin et soir...@elseif($typeOrdonnance == 2)Ex: À jeun, le matin...@else Ex: Sans préparation...@endif"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ $typeOrdonnance == 1 ? 'focus:ring-green-500 focus:border-green-500' : ($typeOrdonnance == 2 ? 'focus:ring-blue-500 focus:border-blue-500' : 'focus:ring-purple-500 focus:border-purple-500') }} text-sm">
+                                               placeholder="@if($typeOrdonnance == 1)Ex: 1 comprimé matin et soir...@elseif($typeOrdonnance == 2)Ex: À jeun, le matin...@endif"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ $typeOrdonnance == 1 ? 'focus:ring-green-500 focus:border-green-500' : 'focus:ring-blue-500 focus:border-blue-500' }} text-sm">
+                                        @endif
                                     </div>
                                 </div>
                                 <button type="button"
