@@ -466,7 +466,11 @@ class OrdonnanceManager extends Component
                     ]);
 
                     // Recalculer le total de la facture
-                    $derniereFacture->TotFacture = ($derniereFacture->TotFacture ?? 0) + ($prix * $quantite);
+                    $montantLigne = $prix * $quantite;
+                    $txpec = $derniereFacture->TXPEC ?? 0;
+                    $derniereFacture->TotFacture        = ($derniereFacture->TotFacture ?? 0) + $montantLigne;
+                    $derniereFacture->TotalPEC          = ($derniereFacture->TotalPEC ?? 0) + ($montantLigne * $txpec);
+                    $derniereFacture->TotalfactPatient  = $derniereFacture->TotFacture - $derniereFacture->TotalPEC;
                     $derniereFacture->save();
 
                     // Mouvement de stock uniquement pour les médicaments
