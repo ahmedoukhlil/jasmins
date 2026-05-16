@@ -42,15 +42,20 @@
 
         /* ── Page ── */
         .page {
-            width: 210mm;
-            height: 297mm;
+            width: 794px;   /* A4 écran ≈ 210mm @96dpi */
+            height: 1123px; /* A4 écran ≈ 297mm @96dpi */
             margin: 24px auto;
             background: #fff;
-            padding: 12mm 15mm 14mm 15mm;
+            padding: 45px 57px 53px 57px;
             position: relative;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+        }
+        .page.a5 {
+            width: 559px !important;   /* A5 écran ≈ 148mm @96dpi */
+            height: 794px !important;  /* A5 écran ≈ 210mm @96dpi */
+            padding: 26px 34px 34px 34px !important;
         }
 
         /* ── Header ── */
@@ -205,8 +210,6 @@
             .page {
                 margin: 0 !important;
                 box-shadow: none !important;
-            }
-            .page.a4 {
                 width: 210mm !important;
                 height: 297mm !important;
                 padding: 10mm 13mm 12mm 13mm !important;
@@ -233,13 +236,8 @@
             .page { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
         }
 
-        /* ── A5 ── */
-        .page.a5 {
-            width: 148mm !important;
-            height: 210mm !important;
-            padding: 7mm 9mm 9mm 9mm !important;
-            font-size: 10px;
-        }
+        /* ── A5 overrides ── */
+        .page.a5 { font-size: 10px; }
         .page.a5 .doc-header { margin-bottom: 7px; padding-bottom: 6px; }
         .page.a5 .header-fr,
         .page.a5 .header-ar { font-size: 8.5px; line-height: 1.5; }
