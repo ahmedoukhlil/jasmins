@@ -203,18 +203,18 @@
             body { background: #fff; }
             .print-controls { display: none !important; }
             .page {
-                margin: 0;
-                padding: 10mm 13mm 12mm 13mm;
-                box-shadow: none;
-                overflow: hidden;
+                margin: 0 !important;
+                box-shadow: none !important;
             }
             .page.a4 {
-                width: 210mm;
-                height: 297mm;
+                width: 210mm !important;
+                height: 297mm !important;
+                padding: 10mm 13mm 12mm 13mm !important;
             }
             .page.a5 {
-                width: 148mm;
-                height: 210mm;
+                width: 148mm !important;
+                height: 210mm !important;
+                padding: 7mm 9mm 9mm 9mm !important;
             }
             .medication-item { page-break-inside: avoid; }
         }
@@ -233,33 +233,38 @@
             .page { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
         }
 
-        /* A5 */
+        /* ── A5 ── */
         .page.a5 {
-            width: 148mm;
-            height: 210mm;
-            padding: 8mm 10mm 10mm 10mm;
+            width: 148mm !important;
+            height: 210mm !important;
+            padding: 7mm 9mm 9mm 9mm !important;
+            font-size: 10px;
         }
-        .page.a5 .ord-title-ar { font-size: 14px; }
-        .page.a5 .ord-title-fr { font-size: 12px; letter-spacing: 4px; }
-        .page.a5 .ord-body { min-height: 200px; font-size: 11px; }
-        .page.a5 .medication-name { font-size: 11px; }
+        .page.a5 .doc-header { margin-bottom: 7px; padding-bottom: 6px; }
         .page.a5 .header-fr,
-        .page.a5 .header-ar { font-size: 9px; }
+        .page.a5 .header-ar { font-size: 8.5px; line-height: 1.5; }
         .page.a5 .header-fr .cabinet-name,
-        .page.a5 .header-ar .cabinet-name { font-size: 11px; }
-        .page.a5 .doc-header { margin-bottom: 8px; padding-bottom: 6px; }
-        .page.a5 .ord-title { margin: 8px 0 10px 0; }
-        .page.a5 .footer-note { font-size: 8px; }
-
-        /* Section patient compactée en A5 */
-        .page.a5 .patient-section { padding: 5px 8px; margin-bottom: 6px; font-size: 10px; }
-        .page.a5 .patient-label { font-size: 9px; min-width: 80px; }
-        .page.a5 .patient-value { font-size: 9px; }
-        .page.a5 .patient-row { margin-bottom: 3px; gap: 4px; }
-        .page.a5 .medication-dosage { font-size: 10px; }
-        .page.a5 .medication-num { width: 18px; height: 18px; line-height: 18px; font-size: 9px; }
-        .page.a5 .footer-signature .sig-label { font-size: 9px; margin-bottom: 20px; }
-        .page.a5 .footer-signature .sig-line { font-size: 9px; }
+        .page.a5 .header-ar .cabinet-name { font-size: 10px; }
+        .page.a5 .header-fr .doctor-name,
+        .page.a5 .header-ar .doctor-name { font-size: 9.5px; }
+        .page.a5 .header-logo img { max-height: 55px; max-width: 90px; }
+        .page.a5 .patient-section { padding: 5px 8px; margin-bottom: 5px; font-size: 9px; }
+        .page.a5 .patient-label { font-size: 8.5px; min-width: 70px; }
+        .page.a5 .patient-value { font-size: 8.5px; }
+        .page.a5 .patient-row { margin-bottom: 3px; gap: 3px; }
+        .page.a5 .ord-title { margin: 7px 0 9px 0; }
+        .page.a5 .ord-title-ar { font-size: 13px; }
+        .page.a5 .ord-title-fr { font-size: 11px; letter-spacing: 4px; }
+        .page.a5 .ord-title-line { margin-top: 4px; }
+        .page.a5 .ord-body { font-size: 10px; line-height: 1.8; padding: 10px 14px; }
+        .page.a5 .medication-name { font-size: 10.5px; }
+        .page.a5 .medication-dosage { font-size: 9.5px; }
+        .page.a5 .medication-num { width: 17px; height: 17px; line-height: 17px; font-size: 8.5px; }
+        .page.a5 .medication-item { margin-bottom: 10px; }
+        .page.a5 .ord-footer { margin-top: 8px; padding-top: 6px; }
+        .page.a5 .footer-note { font-size: 7.5px; }
+        .page.a5 .footer-signature .sig-label { font-size: 8.5px; margin-bottom: 18px; }
+        .page.a5 .footer-signature { min-width: 110px; }
     </style>
 
     <style id="page-size-style">
