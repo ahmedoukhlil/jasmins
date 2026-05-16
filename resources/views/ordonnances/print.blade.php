@@ -376,10 +376,13 @@
             <div>Prière de rapporter l'ordonnance à la prochaine consultation</div>
         </div>
         <div class="footer-signature">
-            <div class="sig-label">Signature &amp; Cachet</div>
-            <div class="sig-line">
-                @if(!$isBlank && isset($ordonnance->prescripteur))Dr {{ $ordonnance->prescripteur->Nom ?? '' }}@endif
+            @if(!$isBlank && isset($ordonnance->prescripteur))
+            <div style="font-size:10px; font-weight:600; color:#1e3a8a; margin-bottom:4px;">
+                Dr {{ $ordonnance->prescripteur->NomComplet ?? $ordonnance->prescripteur->Nom ?? '' }}
             </div>
+            @endif
+            <div class="sig-label">Signature &amp; Cachet</div>
+            <div class="sig-line"></div>
         </div>
     </div>
 
