@@ -428,7 +428,7 @@ class OrdonnanceManager extends Component
                     if (!$medicament) continue;
 
                     $prix     = 0;
-                    $quantite = 1;
+                    $quantite = max(1, (int)($ligne['quantite'] ?? 1));
                     $stock    = null;
 
                     if ($this->typeOrdonnance == 1) {
