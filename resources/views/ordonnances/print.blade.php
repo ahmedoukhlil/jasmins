@@ -313,25 +313,25 @@
         </div>
     </div>
 
+    {{-- ── Date ── --}}
+    <div style="text-align: right; font-size: 11px; font-weight: 600; color: #374151; margin-bottom: 6px;">
+        {{ !$isBlank && isset($ordonnance->dtPrescript) ? \Carbon\Carbon::parse($ordonnance->dtPrescript)->format('d/m/Y') : '' }}
+    </div>
+
     {{-- ── Patient info ── --}}
     <div class="patient-section">
-        <div class="patient-grid">
-            <div class="patient-fields">
-                <div class="patient-row">
-                    <span class="patient-label">Nom et Prénom :</span>
-                    <span class="patient-value">{{ !$isBlank && $ordonnance->patient->NomContact ? $ordonnance->patient->NomContact : '' }}</span>
-                    <span class="patient-label" style="text-align:right; direction:rtl; margin-left:12px;">الاسم و اللقب</span>
-                </div>
-                <div class="patient-row">
-                    <span class="patient-label">Âge :</span>
-                    <span class="patient-value" style="max-width:80px">{{ $age ? $age . ' ans' : '' }}</span>
-                    <span class="patient-label" style="margin-left:20px;">Poids :</span>
-                    <span class="patient-value" style="max-width:80px"></span>
-                    <span class="patient-label" style="text-align:right; direction:rtl; margin-left:12px;">العمر / الوزن</span>
-                </div>
+        <div class="patient-fields">
+            <div class="patient-row">
+                <span class="patient-label">Nom et Prénom :</span>
+                <span class="patient-value">{{ !$isBlank && $ordonnance->patient->NomContact ? $ordonnance->patient->NomContact : '' }}</span>
+                <span class="patient-label" style="text-align:right; direction:rtl; margin-left:12px;">الاسم و اللقب</span>
             </div>
-            <div class="patient-date">
-                {{ !$isBlank && isset($ordonnance->dtPrescript) ? \Carbon\Carbon::parse($ordonnance->dtPrescript)->format('d/m/Y') : '' }}
+            <div class="patient-row">
+                <span class="patient-label">Âge :</span>
+                <span class="patient-value" style="max-width:80px">{{ $age ? $age . ' ans' : '' }}</span>
+                <span class="patient-label" style="margin-left:20px;">Poids :</span>
+                <span class="patient-value" style="max-width:80px"></span>
+                <span class="patient-label" style="text-align:right; direction:rtl; margin-left:12px;">العمر / الوزن</span>
             </div>
         </div>
     </div>
