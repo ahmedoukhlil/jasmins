@@ -42,6 +42,7 @@ class Ordonnance extends Model
 		'fkidrefOrd',
 		'NumordreOrd',
 		'Utilisation',
+		'Quantite',
 		'fkiduser',
 		'estInterne',
 	];

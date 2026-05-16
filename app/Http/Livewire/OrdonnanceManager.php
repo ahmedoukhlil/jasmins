@@ -183,6 +183,7 @@ class OrdonnanceManager extends Component
             'medicament_libelle' => '',
             'libre'              => false,
             'estInterne'         => $this->modeOrdonnance === 'urgence',
+            'quantite'           => 1,
             'stock_quantite'     => null,
             'stock_prix'         => null,
         ];
@@ -400,6 +401,7 @@ class OrdonnanceManager extends Component
                         'fkidrefOrd'     => $ordonnanceRef->id,
                         'NumordreOrd'    => $numOrdreLigne++,
                         'Utilisation'    => $ligne['posologie'] ?? null,
+                        'Quantite'       => max(1, (int)($ligne['quantite'] ?? 1)),
                         'fkiduser'       => Auth::id(),
                         'estInterne'     => !empty($ligne['estInterne']),
                     ]);
