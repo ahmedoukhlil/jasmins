@@ -1224,12 +1224,10 @@ class ReglementFacture extends Component
     {
         $user = Auth::user();
 
-        // Charger les factures seulement si nécessaire et si le patient est sélectionné
+        // Toujours recharger les factures à chaque render (protected non sérialisé par Livewire)
         $factures = null;
         if ($this->selectedPatient) {
-            if (!$this->factures) {
-                $this->factures = $this->getFacturesProperty();
-            }
+            $this->factures = $this->getFacturesProperty();
             $factures = $this->factures;
         }
 
