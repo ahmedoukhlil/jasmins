@@ -528,11 +528,13 @@ class ReglementFacture extends Component
                 default => 'Item'
             };
             session()->flash('message', $typeLabel . ' ajouté avec succès. Vous pouvez continuer à ajouter d\'autres items.');
-            
+
             // Réinitialiser les champs pour permettre l'ajout d'un nouvel item
             $this->resetAddMedicamentForm();
-            
             $this->loadFactures();
+            if ($this->factureSelectionnee) {
+                $this->selectionnerFacture($this->factureSelectionnee['id']);
+            }
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -642,8 +644,11 @@ class ReglementFacture extends Component
 
             DB::commit();
             $this->showAddActeForm = false;
+            $this->loadFactures();
+            if ($this->factureSelectionnee) {
+                $this->selectionnerFacture($this->factureSelectionnee['id']);
+            }
             session()->flash('message', 'Acte ajouté avec succès.');
-            $this->loadFactures(); // Recharger les factures pour voir les changements
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -787,7 +792,10 @@ class ReglementFacture extends Component
             
             $typeItem = $detail->IsAct == 2 ? 'Médicament' : 'Acte';
             session()->flash('message', $typeItem . ' supprimé avec succès' . ($detail->IsAct == 2 ? '. Le stock a été restauré.' : '.'));
-            $this->loadFactures(); // Recharger les factures pour voir les changements
+            $this->loadFactures();
+            if ($this->factureSelectionnee) {
+                $this->selectionnerFacture($this->factureSelectionnee['id']);
+            }
 
         } catch (\Exception $e) {
             DB::rollBack();
