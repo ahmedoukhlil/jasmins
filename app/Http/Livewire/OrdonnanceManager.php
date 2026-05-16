@@ -374,7 +374,11 @@ class OrdonnanceManager extends Component
                 'dtPrescript' => now(),
                 'fkidCabinet' => Auth::user()->fkidcabinet,
                 'TypeOrdonnance' => $this->modeOrdonnance === 'urgence'
-                    ? 'Traitement d\'urgence'
+                    ? match($this->typeOrdonnance) {
+                        2 => 'Ordonnance d\'Analyses',
+                        3 => 'Ordonnance de Radiologie',
+                        default => 'Traitement d\'urgence'
+                      }
                     : $this->typeOrdonnanceLibelle
             ]);
 
@@ -569,12 +573,14 @@ class OrdonnanceManager extends Component
         $result = [];
         foreach ($this->ordonnancesPatient as $ordonnanceRef) {
             // Vérifier le type d'ordonnance selon le libellé
-            $typeOrdonnance = match($ordonnanceRef['TypeOrdonnance'] ?? '') {
-                'Ordonnance Médicale', 'Traitement d\'urgence' => 1,
-                'Ordonnance d\'Analyses' => 2,
-                'Ordonnance de Radiologie' => 3,
-                default => null
-            };
+            $t = $ordonnanceRef['TypeOrdonnance'] ?? '';
+            if (str_contains($t, 'Analyse') || str_contains($t, 'analyse')) {
+                $typeOrdonnance = 2;
+            } elseif (str_contains($t, 'Radio') || str_contains($t, 'radio')) {
+                $typeOrdonnance = 3;
+            } else {
+                $typeOrdonnance = 1; // Médicale, Traitement d'urgence, Ordonnance de sortie, etc.
+            }
 
             if ($typeOrdonnance === $type && isset($ordonnanceRef['ordonnances'])) {
                 $result[] = [
