@@ -40,8 +40,10 @@ Route::middleware(['auth'])->group(function () {
         if (!$user->hasPermission('salle-soins.view')) {
             return response()->json(['count' => 0]);
         }
+        // Compter uniquement les soins en attente ou en cours (pas terminés)
         $count = \App\Models\Ordonnanceref::whereDate('dtPrescript', now()->toDateString())
             ->where('fkidCabinet', $user->fkidcabinet)
+            ->whereIn('statutSoin', ['en_attente', 'en_cours'])
             ->whereHas('ordonnances', fn($q) => $q->where('estInterne', true))
             ->count();
         return response()->json(['count' => $count]);
