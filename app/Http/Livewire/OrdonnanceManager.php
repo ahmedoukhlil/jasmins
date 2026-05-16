@@ -461,7 +461,7 @@ class OrdonnanceManager extends Component
                         'fkidMedecin'    => Auth::user()->fkidmedecin,
                         'user'           => Auth::id(),
                         'fkidmedicament' => $ligne['medicament_id'],
-                        'IsAct'          => 0,
+                        'IsAct'          => ($medicament->fkidtype ?? 1) + 1, // 2=Médicament, 3=Analyse, 4=Radio
                         'fkidcabinet'    => Auth::user()->fkidcabinet,
                     ]);
 
