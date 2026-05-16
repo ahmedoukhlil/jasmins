@@ -332,20 +332,24 @@
 
     {{-- ── Patient info ── --}}
     <div class="patient-section">
-        <div class="patient-fields">
-            <div class="patient-row">
-                <span class="patient-label">Nom et Prénom :</span>
-                <span class="patient-value">{{ !$isBlank && $ordonnance->patient->NomContact ? $ordonnance->patient->NomContact : '' }}</span>
-                <span class="patient-label" style="text-align:right; direction:rtl; margin-left:12px;">الاسم و اللقب</span>
-            </div>
-            <div class="patient-row">
-                <span class="patient-label">Âge :</span>
-                <span class="patient-value" style="max-width:80px">{{ $age ? $age . ' ans' : '' }}</span>
-                <span class="patient-label" style="margin-left:20px;">Poids :</span>
-                <span class="patient-value" style="max-width:80px"></span>
-                <span class="patient-label" style="text-align:right; direction:rtl; margin-left:12px;">العمر / الوزن</span>
-            </div>
-        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:inherit;">
+            <tr>
+                <td style="font-weight:600; color:#64748b; font-size:10.5px; white-space:nowrap; padding-right:6px; width:1%;">Nom et Prénom :</td>
+                <td style="border-bottom:1px dotted #94a3b8; color:#1e293b; font-weight:500; padding-bottom:1px;">{{ !$isBlank && $ordonnance->patient->NomContact ? $ordonnance->patient->NomContact : '' }}</td>
+                <td style="font-weight:600; color:#64748b; font-size:10.5px; white-space:nowrap; text-align:right; direction:rtl; padding-left:10px; width:1%;">الاسم و اللقب</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600; color:#64748b; font-size:10.5px; white-space:nowrap; padding-right:6px; padding-top:5px;">Âge :</td>
+                <td style="padding-top:5px;">
+                    <div style="display:flex; gap:8px; align-items:baseline;">
+                        <span style="border-bottom:1px dotted #94a3b8; min-width:60px; font-weight:500; color:#1e293b;">{{ $age ? $age . ' ans' : '' }}</span>
+                        <span style="font-weight:600; color:#64748b; font-size:10.5px; white-space:nowrap;">Poids :</span>
+                        <span style="border-bottom:1px dotted #94a3b8; min-width:60px;"></span>
+                    </div>
+                </td>
+                <td style="font-weight:600; color:#64748b; font-size:10.5px; white-space:nowrap; text-align:right; direction:rtl; padding-left:10px; padding-top:5px;">العمر / الوزن</td>
+            </tr>
+        </table>
     </div>
 
     {{-- ── Title ── --}}
