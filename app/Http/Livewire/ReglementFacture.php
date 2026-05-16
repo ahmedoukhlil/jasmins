@@ -26,6 +26,7 @@ class ReglementFacture extends Component
     use WithPagination;
 
     public $selectedPatient = null;
+    public $selectedPatientId = null; // cache de secours si selectedPatient est perdu
     protected $factures;
     public $factureSelectionnee;
     public $montantReglement;
@@ -114,11 +115,10 @@ class ReglementFacture extends Component
         
         if ($selectedPatient) {
             if (is_object($selectedPatient)) {
-                $selectedPatient = (array) $selectedPatient;
+                $selectedPatient = $selectedPatient->toArray();
             }
             $this->selectedPatient = $selectedPatient;
-            // Ne pas charger les factures immédiatement, elles seront chargées lors du render
-            // $this->loadFactures();
+            $this->selectedPatientId = $selectedPatient['ID'] ?? $selectedPatient['id'] ?? null;
         }
         // Ne pas charger les factures en attente au mount (non utilisé dans le modal)
         // $this->loadFacturesEnAttente();
@@ -128,6 +128,7 @@ class ReglementFacture extends Component
     {
         $this->showMedecinModal = false;
         $this->selectedPatient = $patient;
+        $this->selectedPatientId = is_array($patient) ? ($patient['ID'] ?? $patient['id'] ?? null) : ($patient->ID ?? null);
         $this->loadFactures();
     }
 
@@ -1223,6 +1224,14 @@ class ReglementFacture extends Component
     public function render()
     {
         $user = Auth::user();
+
+        // Récupérer selectedPatient depuis la DB si perdu entre les requêtes Livewire
+        if (!$this->selectedPatient && $this->selectedPatientId) {
+            $patient = Patient::find($this->selectedPatientId);
+            if ($patient) {
+                $this->selectedPatient = $patient->toArray();
+            }
+        }
 
         // Toujours recharger les factures à chaque render (protected non sérialisé par Livewire)
         $factures = null;
