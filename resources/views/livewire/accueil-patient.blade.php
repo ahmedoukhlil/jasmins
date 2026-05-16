@@ -321,7 +321,7 @@ $patientId = $selectedPatient
             <button type="button" wire:click="fermerReglementModal" class="modal-close"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-            <livewire:reglement-facture wire:key="reglement-modal-{{ $patientId }}" :selectedPatient="$selectedPatient" lazy />
+            <livewire:reglement-facture wire:key="reglement-modal-{{ $patientId }}" :selectedPatient="$selectedPatient" />
         </div>
     </div>
 </div>
