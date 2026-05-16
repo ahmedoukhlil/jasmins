@@ -47,6 +47,7 @@
         @media print {
             .whatsapp-btn { display: none !important; }
             .details-table tbody tr:nth-child(even) td { background: none !important; }
+            * { color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>

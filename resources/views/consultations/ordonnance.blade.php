@@ -177,6 +177,7 @@
             .print-controls {
                 display: none !important;
             }
+            * { color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
             .footer {
                 position: fixed;

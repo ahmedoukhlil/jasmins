@@ -48,6 +48,7 @@
         @media print {
             .print-controls { display: none !important; }
             .a4 { box-shadow: none; }
+            * { color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>

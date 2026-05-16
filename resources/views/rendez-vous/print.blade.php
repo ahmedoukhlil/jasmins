@@ -34,11 +34,12 @@
         .recu-header, .recu-footer { width: 100%; text-align: center; }
         .recu-header img, .recu-footer img { max-width: 100%; height: auto; }
         .recu-footer { position: absolute; bottom: 0; left: 0; width: 100%; }
-        @media print { 
-            .a4, .a5 { box-shadow: none; } 
-            .recu-footer { position: fixed; bottom: 0; left: 0; width: 100%; } 
+        @media print {
+            .a4, .a5 { box-shadow: none; }
+            .recu-footer { position: fixed; bottom: 0; left: 0; width: 100%; }
             .print-controls { display: none !important; }
             .qr-code-container:hover { transform: none; }
+            * { color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .qr-code-link { color: #000 !important; }
             .qr-code-container { background: #fff !important; }
             a { color: #000 !important; text-decoration: none !important; }

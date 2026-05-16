@@ -207,6 +207,12 @@
         @media print {
             body { background: #fff; }
             .print-controls { display: none !important; }
+            * { color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .medication-num { background: #000 !important; color: #fff !important; }
+            .ord-title-ar, .ord-title-fr { color: #000 !important; }
+            .doc-header { border-bottom-color: #000 !important; }
+            .ord-title-line { background: #000 !important; }
+            .footer-note, .patient-label, .specialty, .footer-signature { color: #000 !important; }
             .page {
                 margin: 0 !important;
                 box-shadow: none !important;
