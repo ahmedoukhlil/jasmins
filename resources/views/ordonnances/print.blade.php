@@ -43,13 +43,14 @@
         /* ── Page ── */
         .page {
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm;
             margin: 24px auto;
             background: #fff;
             padding: 12mm 15mm 14mm 15mm;
             position: relative;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         /* ── Header ── */
@@ -205,10 +206,27 @@
                 margin: 0;
                 padding: 10mm 13mm 12mm 13mm;
                 box-shadow: none;
-                min-height: 0;
+                overflow: hidden;
             }
-            @page { size: A4 portrait; margin: 0; }
+            .page.a4 {
+                width: 210mm;
+                height: 297mm;
+            }
+            .page.a5 {
+                width: 148mm;
+                height: 210mm;
+            }
             .medication-item { page-break-inside: avoid; }
+        }
+
+        /* A4 print @page rule */
+        body.format-a4 {
+            --page-width: 210mm;
+            --page-height: 297mm;
+        }
+        body.format-a5 {
+            --page-width: 148mm;
+            --page-height: 210mm;
         }
 
         @media screen {
@@ -218,17 +236,25 @@
         /* A5 */
         .page.a5 {
             width: 148mm;
-            min-height: 210mm;
+            height: 210mm;
             padding: 8mm 10mm 10mm 10mm;
         }
         .page.a5 .ord-title-ar { font-size: 14px; }
         .page.a5 .ord-title-fr { font-size: 12px; letter-spacing: 4px; }
-        .page.a5 .ord-body { min-height: 270px; font-size: 11px; }
+        .page.a5 .ord-body { min-height: 200px; font-size: 11px; }
         .page.a5 .medication-name { font-size: 11px; }
         .page.a5 .header-fr,
         .page.a5 .header-ar { font-size: 9px; }
         .page.a5 .header-fr .cabinet-name,
         .page.a5 .header-ar .cabinet-name { font-size: 11px; }
+        .page.a5 .patient-section { padding: 7px 10px; margin-bottom: 10px; }
+        .page.a5 .doc-header { margin-bottom: 10px; padding-bottom: 8px; }
+        .page.a5 .ord-title { margin: 10px 0 12px 0; }
+        .page.a5 .footer-note { font-size: 8px; }
+    </style>
+
+    <style id="page-size-style">
+        @media print { @page { size: A4 portrait; margin: 0; } }
     </style>
 </head>
 <body>
@@ -352,10 +378,19 @@
 
 <script>
 function updatePageFormat() {
-    const isA5 = document.getElementById('pageFormat').value === 'A5';
+    const format = document.getElementById('pageFormat').value;
+    const isA5 = format === 'A5';
     const page = document.getElementById('documentPage');
     page.classList.toggle('a4', !isA5);
     page.classList.toggle('a5', isA5);
+
+    // Mettre à jour la règle @page pour l'impression
+    const styleEl = document.getElementById('page-size-style');
+    if (isA5) {
+        styleEl.textContent = '@media print { @page { size: A5 portrait; margin: 0; } }';
+    } else {
+        styleEl.textContent = '@media print { @page { size: A4 portrait; margin: 0; } }';
+    }
 }
 
 const urlParams = new URLSearchParams(window.location.search);
