@@ -365,9 +365,6 @@ class CaisseOperationsManager extends Component
         return view('livewire.caisse-operations-manager', [
             'operations' => $paginatedOperations,
             'medecins' => $medecins,
-            'isSecretaire' => $this->isSecretaire,
-            'isDocteur' => $this->isDocteur,
-            'isDocteurProprietaire' => $this->isDocteurProprietaire,
             'totalRecettes' => $totalRecettes,
             'totalDepenses' => $totalDepenses,
             'solde' => $solde,
