@@ -161,8 +161,8 @@
                     @foreach($operations as $operation)
                     <tr>
                         <td class="whitespace-nowrap">{{ \Carbon\Carbon::parse($operation->dateoper)->format('d/m/Y') }}</td>
-                        <td>{{ $operation->medecin->Nom ?? '—' }}</td>
-                        <td>{{ $operation->tiers->Nom ?? '—' }}</td>
+                        <td>{{ $operation->medecin->Nom ?? '-' }}</td>
+                        <td>{{ $operation->tiers->Nom ?? '-' }}</td>
                         <td>{{ $operation->designation }}</td>
                         <td class="font-semibold {{ $operation->entreEspece ? 'text-primary' : 'text-red-600' }} whitespace-nowrap">
                             {{ number_format($operation->MontantOperation, 0, ',', ' ') }} MRU
@@ -183,7 +183,7 @@
                                 <i class="fas fa-trash-alt"></i> Supprimer
                             </button>
                             @else
-                            <span class="text-gray-400 text-sm">—</span>
+                            <span class="text-gray-400 text-sm">-</span>
                             @endif
                         </td>
                         @endif

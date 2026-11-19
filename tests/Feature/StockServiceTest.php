@@ -157,4 +157,54 @@ class StockServiceTest extends TestCase
         $this->assertEquals(10.0, LotMedicament::firstOrFail()->quantiteRestante);
         $this->assertSame(0, MouvementStock::sorties()->count());
     }
+
+    public function test_positive_adjustment_replaces_quantity_without_average_cost(): void
+    {
+        $service = app(StockService::class);
+        $stock = $service->addEntry(1, 10, 5, 100, 7);
+
+        $ecart = $service->adjustStock($stock->idStock, 8, 250, 'Inventaire physique', 7);
+
+        $this->assertEquals(3.0, $ecart);
+        $this->assertEquals(8.0, $stock->fresh()->quantiteStock);
+        $this->assertEquals(250.0, $stock->fresh()->prixAchat);
+        $this->assertEquals(3.0, LotMedicament::orderByDesc('idLot')->firstOrFail()->quantiteRestante);
+        $this->assertDatabaseHas('mouvements_stock', [
+            'typeMouvement' => 'AJUSTEMENT',
+            'quantite' => 3,
+            'prixUnitaire' => 250,
+            'motif' => 'Inventaire physique',
+        ]);
+    }
+
+    public function test_negative_adjustment_supports_historical_stock_without_lots(): void
+    {
+        $stock = StockMedicament::create([
+            'fkidMedicament' => 1,
+            'fkidCabinet' => 10,
+            'quantiteStock' => 9,
+            'quantiteMin' => 0,
+            'prixAchat' => 80,
+            'prixVente' => 100,
+            'Masquer' => 0,
+        ]);
+
+        $ecart = app(StockService::class)->adjustStock(
+            $stock->idStock,
+            4,
+            0,
+            'Correction stock historique',
+            7
+        );
+
+        $this->assertEquals(-5.0, $ecart);
+        $this->assertEquals(4.0, $stock->fresh()->quantiteStock);
+        $this->assertSame(0, LotMedicament::count());
+        $this->assertDatabaseHas('mouvements_stock', [
+            'typeMouvement' => 'AJUSTEMENT',
+            'fkidLot' => null,
+            'quantite' => -5,
+            'prixUnitaire' => 80,
+        ]);
+    }
 }

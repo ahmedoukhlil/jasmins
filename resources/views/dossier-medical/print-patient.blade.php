@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dossier médical — {{ $patient->NomPatient ?? ($patient->Nom.' '.($patient->Prenom ?? '')) }}</title>
+    <title>Dossier médical - {{ $patient->NomPatient ?? ($patient->Nom.' '.($patient->Prenom ?? '')) }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -483,7 +483,7 @@
                         {{ \Carbon\Carbon::parse($c->date_consultation)->translatedFormat('d F Y à H:i') }}
                     </span>
                     @if($c->motif)
-                        <span style="color:#64748b;font-size:10px;"> — {{ $c->motif }}</span>
+                        <span style="color:#64748b;font-size:10px;"> - {{ $c->motif }}</span>
                     @endif
                 </div>
                 @if($c->medecin)
@@ -502,27 +502,27 @@
                     <div class="constantes-grid">
                         <div class="constante-box" style="background:#fff5f5;border-color:#fecaca;">
                             <div class="c-label">Temp.</div>
-                            <div class="c-value" style="color:#dc2626;">{{ $c->temperature ?: '—' }}</div>
+                            <div class="c-value" style="color:#dc2626;">{{ $c->temperature ?: '-' }}</div>
                         </div>
                         <div class="constante-box" style="background:#eff6ff;border-color:#bfdbfe;">
                             <div class="c-label">Tension</div>
-                            <div class="c-value" style="color:#1d4ed8;">{{ $c->tension_arterielle ?: '—' }}</div>
+                            <div class="c-value" style="color:#1d4ed8;">{{ $c->tension_arterielle ?: '-' }}</div>
                         </div>
                         <div class="constante-box" style="background:#fdf2f8;border-color:#f9a8d4;">
                             <div class="c-label">FC</div>
-                            <div class="c-value" style="color:#be185d;">{{ $c->frequence_cardiaque ?: '—' }}</div>
+                            <div class="c-value" style="color:#be185d;">{{ $c->frequence_cardiaque ?: '-' }}</div>
                         </div>
                         <div class="constante-box" style="background:#ecfeff;border-color:#a5f3fc;">
                             <div class="c-label">SpO2</div>
-                            <div class="c-value" style="color:#0e7490;">{{ $c->spo2 ?: '—' }}</div>
+                            <div class="c-value" style="color:#0e7490;">{{ $c->spo2 ?: '-' }}</div>
                         </div>
                         <div class="constante-box" style="background:#f0fdf4;border-color:#bbf7d0;">
                             <div class="c-label">Poids</div>
-                            <div class="c-value" style="color:#15803d;">{{ $c->poids ?: '—' }}</div>
+                            <div class="c-value" style="color:#15803d;">{{ $c->poids ?: '-' }}</div>
                         </div>
                         <div class="constante-box" style="background:#faf5ff;border-color:#ddd6fe;">
                             <div class="c-label">Taille</div>
-                            <div class="c-value" style="color:#6d28d9;">{{ $c->taille ?: '—' }}</div>
+                            <div class="c-value" style="color:#6d28d9;">{{ $c->taille ?: '-' }}</div>
                         </div>
                     </div>
                 </div>
@@ -632,8 +632,8 @@
 
     {{-- ── Pied de page ── --}}
     <div class="footer">
-        <span>{{ $cabinet->NomCabFr ?? 'Cabinet Médical' }} — Dossier confidentiel</span>
-        <span>{{ $nomPatient }} — N° {{ $patient->IdentifiantPatient ?? $patient->ID }}</span>
+        <span>{{ $cabinet->NomCabFr ?? 'Cabinet Médical' }} - Dossier confidentiel</span>
+        <span>{{ $nomPatient }} - N° {{ $patient->IdentifiantPatient ?? $patient->ID }}</span>
         <span>Imprimé le {{ now()->format('d/m/Y H:i') }}</span>
     </div>
 

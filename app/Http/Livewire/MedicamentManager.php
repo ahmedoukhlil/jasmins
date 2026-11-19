@@ -38,6 +38,7 @@ class MedicamentManager extends Component
     public $showDeleteModal = false;
     public $medicamentToDelete;
     public $showStockModal = false;
+    public $showAjustementModal = false;
     public $showImportModal = false;
     public $importFile;
     public $importResult = null;
@@ -51,6 +52,14 @@ class MedicamentManager extends Component
     public $stockDateExpiration = null;
     public $stockFournisseur = '';
     public $stockReferenceFacture = '';
+
+    // Propriétés pour l'ajustement d'inventaire
+    public $ajustementMedicamentId;
+    public $ajustementLibelle = '';
+    public $ajustementQuantiteActuelle = 0;
+    public $ajustementNouvelleQuantite = 0;
+    public $ajustementPrixNouveauStock = 0;
+    public $ajustementMotif = '';
 
     protected function rules()
     {
@@ -286,6 +295,127 @@ class MedicamentManager extends Component
         session()->flash('message', 'Stock ajouté avec succès.');
         // Réinitialiser les champs sauf le médicament pour permettre d'ajouter plus de stock
         $this->resetStockForm();
+    }
+
+    public function openAjustementModal($medicamentId)
+    {
+        $this->resetValidation([
+            'ajustementNouvelleQuantite',
+            'ajustementPrixNouveauStock',
+            'ajustementMotif',
+        ]);
+
+        $medicament = Medicament::where('IDMedic', $medicamentId)
+            ->where('fkidtype', 1)
+            ->first();
+
+        if (!$medicament) {
+            session()->flash('error', 'Médicament introuvable.');
+            return;
+        }
+
+        $cabinetId = (int) (Auth::user()->fkidcabinet ?? 1);
+        $stock = StockMedicament::firstOrCreate(
+            [
+                'fkidMedicament' => $medicament->IDMedic,
+                'fkidCabinet' => $cabinetId,
+            ],
+            [
+                'quantiteStock' => 0,
+                'quantiteMin' => 0,
+                'prixAchat' => 0,
+                'prixVente' => $medicament->PrixRef ?? 0,
+                'Masquer' => 0,
+            ]
+        );
+
+        $this->ajustementMedicamentId = $medicament->IDMedic;
+        $this->ajustementLibelle = $medicament->LibelleMedic;
+        $this->ajustementQuantiteActuelle = (float) $stock->quantiteStock;
+        $this->ajustementNouvelleQuantite = (float) $stock->quantiteStock;
+        $this->ajustementPrixNouveauStock = (float) $stock->prixAchat;
+        $this->ajustementMotif = '';
+        $this->showAjustementModal = true;
+    }
+
+    public function closeAjustementModal()
+    {
+        $this->showAjustementModal = false;
+        $this->ajustementMedicamentId = null;
+        $this->ajustementLibelle = '';
+        $this->ajustementQuantiteActuelle = 0;
+        $this->ajustementNouvelleQuantite = 0;
+        $this->ajustementPrixNouveauStock = 0;
+        $this->ajustementMotif = '';
+        $this->resetValidation([
+            'ajustementNouvelleQuantite',
+            'ajustementPrixNouveauStock',
+            'ajustementMotif',
+        ]);
+    }
+
+    public function enregistrerAjustement()
+    {
+        $rules = [
+            'ajustementMedicamentId' => 'required|exists:medicaments,IDMedic',
+            'ajustementNouvelleQuantite' => 'required|numeric|min:0',
+            'ajustementMotif' => 'required|string|min:3|max:255',
+        ];
+        $messages = [
+            'ajustementNouvelleQuantite.required' => 'La quantité réellement comptée est requise.',
+            'ajustementNouvelleQuantite.numeric' => 'La quantité doit être un nombre.',
+            'ajustementNouvelleQuantite.min' => 'La quantité ne peut pas être négative.',
+            'ajustementMotif.required' => 'Le motif de l’ajustement est obligatoire.',
+            'ajustementMotif.min' => 'Le motif doit contenir au moins 3 caractères.',
+        ];
+
+        $ecartSaisi = (float) $this->ajustementNouvelleQuantite
+            - (float) $this->ajustementQuantiteActuelle;
+        if ($ecartSaisi > 0) {
+            $rules['ajustementPrixNouveauStock'] = 'required|numeric|min:0';
+            $messages['ajustementPrixNouveauStock.required'] = 'Le prix d’achat des unités ajoutées est requis.';
+        }
+
+        $this->validate($rules, $messages);
+
+        $cabinetId = (int) (Auth::user()->fkidcabinet ?? 1);
+        $stock = StockMedicament::where('fkidMedicament', $this->ajustementMedicamentId)
+            ->where('fkidCabinet', $cabinetId)
+            ->first();
+
+        if (!$stock) {
+            $this->addError('ajustementNouvelleQuantite', 'Le stock de ce médicament est introuvable.');
+            return;
+        }
+
+        $nouvelleQuantite = (float) $this->ajustementNouvelleQuantite;
+        $ecart = $nouvelleQuantite - (float) $stock->quantiteStock;
+        if (abs($ecart) < 0.00001) {
+            $this->addError('ajustementNouvelleQuantite', 'La quantité saisie est identique au stock actuel.');
+            return;
+        }
+
+        try {
+            app(StockService::class)->adjustStock(
+                (int) $stock->idStock,
+                $nouvelleQuantite,
+                (float) $this->ajustementPrixNouveauStock,
+                trim($this->ajustementMotif),
+                (int) Auth::id()
+            );
+
+            Cache::forget('referentiel_medicaments_v2_' . $cabinetId);
+            session()->flash(
+                'message',
+                'Stock ajusté avec succès (' . ($ecart > 0 ? '+' : '') . number_format($ecart, 0) . ').'
+            );
+            $this->closeAjustementModal();
+        } catch (\DomainException $exception) {
+            $this->addError('ajustementNouvelleQuantite', $exception->getMessage());
+        } catch (\Throwable $exception) {
+            report($exception);
+            $this->addError('ajustementNouvelleQuantite', 'L’ajustement n’a pas pu être enregistré.');
+        }
     }
 
     public function openImportModal()

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTURE — {{ $facture->Nfacture }}</title>
+    <title>FACTURE - {{ $facture->Nfacture }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -129,19 +129,19 @@
         <div class="patient-col">
             <div class="patient-row">
                 <span class="patient-label">N° Fiche</span>
-                <span class="patient-value">{{ $facture->patient->IdentifiantPatient ?? '—' }}</span>
+                <span class="patient-value">{{ $facture->patient->IdentifiantPatient ?? '-' }}</span>
             </div>
             <div class="patient-row">
                 <span class="patient-label">Patient</span>
-                <span class="patient-value">{{ $facture->patient->Prenom ?? $facture->patient->Nom ?? '—' }}</span>
+                <span class="patient-value">{{ $facture->patient->Prenom ?? $facture->patient->Nom ?? '-' }}</span>
             </div>
             <div class="patient-row">
                 <span class="patient-label">Téléphone</span>
-                <span class="patient-value">{{ $facture->patient->Telephone1 ?? '—' }}</span>
+                <span class="patient-value">{{ $facture->patient->Telephone1 ?? '-' }}</span>
             </div>
             <div class="patient-row">
                 <span class="patient-label">Praticien</span>
-                <span class="patient-value">Dr {{ $facture->medecin->Nom ?? '—' }}</span>
+                <span class="patient-value">Dr {{ $facture->medecin->Nom ?? '-' }}</span>
             </div>
         </div>
         <div class="doc-meta">
@@ -214,8 +214,8 @@
 
     <div class="doc-footer">
         @if($cab && $cab->NomCabFr){{ $cab->NomCabFr }}@endif
-        @if($cab && $cab->AdresseFr1) — {{ $cab->AdresseFr1 }}@endif
-        @if($cab && $cab->ContactFR) — {{ $cab->ContactFR }}@endif
+        @if($cab && $cab->AdresseFr1) - {{ $cab->AdresseFr1 }}@endif
+        @if($cab && $cab->ContactFR) - {{ $cab->ContactFR }}@endif
     </div>
 </div>
 </body>

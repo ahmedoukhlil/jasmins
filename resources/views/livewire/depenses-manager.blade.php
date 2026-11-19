@@ -20,7 +20,7 @@
         <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
             <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Période</dt>
             <dd class="text-base font-semibold text-primary">
-                {{ \Carbon\Carbon::parse($dateDebut)->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($dateFin)->format('d/m/Y') }}
+                {{ \Carbon\Carbon::parse($dateDebut)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($dateFin)->format('d/m/Y') }}
             </dd>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
@@ -134,7 +134,7 @@
                     <td>{{ $depense->designation }}</td>
                     <td>
                         @php $typeTiers = $typesTiers->firstWhere('IdTypeTiers', $depense->fkIdTypeTiers); @endphp
-                        {{ $typeTiers ? $typeTiers->LibelleTypeTiers : '—' }}
+                        {{ $typeTiers ? $typeTiers->LibelleTypeTiers : '-' }}
                     </td>
                     <td class="font-semibold text-red-600 whitespace-nowrap">
                         {{ number_format($depense->retraitEspece, 0, ',', ' ') }} MRU

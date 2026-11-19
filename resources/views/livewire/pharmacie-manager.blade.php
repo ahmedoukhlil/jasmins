@@ -17,13 +17,13 @@
         @if($alertesStockFaible > 0)
         <div class="flex items-center gap-2 px-4 py-3 bg-yellow-50 border-l-4 border-yellow-400 rounded text-yellow-800 text-sm">
             <i class="fas fa-exclamation-triangle"></i>
-            <span><strong>{{ $alertesStockFaible }}</strong> médicament(s) en stock faible — quantité inférieure au seuil minimum</span>
+            <span><strong>{{ $alertesStockFaible }}</strong> médicament(s) en stock faible - quantité inférieure au seuil minimum</span>
         </div>
         @endif
         @if($alertesExpires > 0)
         <div class="flex items-center gap-2 px-4 py-3 bg-red-50 border-l-4 border-red-400 rounded text-red-800 text-sm">
             <i class="fas fa-times-circle"></i>
-            <span><strong>{{ $alertesExpires }}</strong> lot(s) expiré(s) — date d'expiration dépassée</span>
+            <span><strong>{{ $alertesExpires }}</strong> lot(s) expiré(s) - date d'expiration dépassée</span>
         </div>
         @endif
         @if($alertesExpireBientot > 0)
@@ -106,15 +106,15 @@
         <div class="modal-box max-w-5xl w-full">
             <div class="modal-header">
                 <h2>
-                    @if($detailType === 'total') Détails — Total médicaments
-                    @elseif($detailType === 'valeur') Détails — Valeur du stock
-                    @elseif($detailType === 'quantite') Détails — Unités disponibles
-                    @elseif($detailType === 'rupture') Détails — Médicaments en rupture
-                    @elseif($detailType === 'faible') Détails — Stock faible
-                    @elseif($detailType === 'expires') Détails — Lots expirés
-                    @elseif($detailType === 'expire_bientot') Détails — Lots expirant bientôt
-                    @elseif($detailType === 'entrees') Détails — Entrées ce mois
-                    @elseif($detailType === 'sorties') Détails — Sorties ce mois
+                    @if($detailType === 'total') Détails - Total médicaments
+                    @elseif($detailType === 'valeur') Détails - Valeur du stock
+                    @elseif($detailType === 'quantite') Détails - Unités disponibles
+                    @elseif($detailType === 'rupture') Détails - Médicaments en rupture
+                    @elseif($detailType === 'faible') Détails - Stock faible
+                    @elseif($detailType === 'expires') Détails - Lots expirés
+                    @elseif($detailType === 'expire_bientot') Détails - Lots expirant bientôt
+                    @elseif($detailType === 'entrees') Détails - Entrées ce mois
+                    @elseif($detailType === 'sorties') Détails - Sorties ce mois
                     @endif
                 </h2>
                 <button wire:click="fermerDetailModal" class="modal-close"><i class="fas fa-times"></i></button>
@@ -125,7 +125,7 @@
                 <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
                     <p class="text-sm text-gray-500">
                         @if($filteredCount > 0)
-                            {{ (($this->detailPage - 1) * $this->detailPerPage) + 1 }}–{{ min($this->detailPage * $this->detailPerPage, $filteredCount) }} sur {{ $filteredCount }} résultat(s)
+                            {{ (($this->detailPage - 1) * $this->detailPerPage) + 1 }}-{{ min($this->detailPage * $this->detailPerPage, $filteredCount) }} sur {{ $filteredCount }} résultat(s)
                             @if($detailSearch !== '') <span class="text-gray-400">(filtré sur {{ count($detailData) }})</span>@endif
                         @else
                             Aucun résultat pour « {{ $detailSearch }} »
@@ -364,7 +364,7 @@
                             <tbody class="divide-y divide-gray-100">
                                 @foreach($ajustementLots as $lot)
                                 <tr>
-                                    <td class="px-3 py-1.5">{{ $lot['numeroLot'] ?? '—' }}</td>
+                                    <td class="px-3 py-1.5">{{ $lot['numeroLot'] ?? '-' }}</td>
                                     <td class="px-3 py-1.5 text-right">{{ number_format($lot['quantite'], 0) }}</td>
                                     <td class="px-3 py-1.5 text-right">{{ number_format($lot['prixAchat'], 2) }}</td>
                                     <td class="px-3 py-1.5 text-right font-medium">{{ number_format($lot['valeur'], 0) }} MRU</td>

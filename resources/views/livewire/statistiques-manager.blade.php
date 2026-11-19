@@ -170,8 +170,8 @@
                     @foreach($operations as $operation)
                     <tr>
                         <td class="whitespace-nowrap">{{ \Carbon\Carbon::parse($operation->dateoper)->format('d/m/Y') }}</td>
-                        <td>{{ $medecins->firstWhere('idMedecin', $operation->fkidmedecin)->Nom ?? ($operation->medecin ?? '—') }}</td>
-                        <td>{{ $operation->tiers->Nom ?? '—' }}</td>
+                        <td>{{ $medecins->firstWhere('idMedecin', $operation->fkidmedecin)->Nom ?? ($operation->medecin ?? '-') }}</td>
+                        <td>{{ $operation->tiers->Nom ?? '-' }}</td>
                         <td>{{ $operation->designation }}</td>
                         <td class="font-semibold whitespace-nowrap {{ $operation->retraitEspece > 0 ? 'text-red-600' : 'text-primary' }}">
                             @if($operation->retraitEspece > 0)

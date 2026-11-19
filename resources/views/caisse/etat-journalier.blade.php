@@ -66,8 +66,8 @@
                         <td>{{ \Carbon\Carbon::parse($op->dateoper)->format('H:i') }}</td>
                         <td>{{ $op->designation }}</td>
                         <td>{{ $op->TypePAie }}</td>
-                        <td class="right">{{ $op->entreEspece > 0 ? number_format($op->entreEspece, 0, ',', ' ').' MRU' : '—' }}</td>
-                        <td class="right">{{ $op->retraitEspece > 0 ? number_format($op->retraitEspece, 0, ',', ' ').' MRU' : '—' }}</td>
+                        <td class="right">{{ $op->entreEspece > 0 ? number_format($op->entreEspece, 0, ',', ' ').' MRU' : '-' }}</td>
+                        <td class="right">{{ $op->retraitEspece > 0 ? number_format($op->retraitEspece, 0, ',', ' ').' MRU' : '-' }}</td>
                     </tr>
                     @endforeach
                 </tbody>

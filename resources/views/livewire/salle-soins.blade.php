@@ -152,7 +152,7 @@
                                     <span class="text-xs font-semibold {{ $typeColor['text'] }}">{{ $ord['TypeOrd'] }}</span>
                                     <span class="ml-auto text-[10px] text-gray-400">
                                         {{ \Carbon\Carbon::parse($ord['dtPrescript'])->format('H:i') }}
-                                        — Dr. {{ $ord['prescripteur']['NomComplet'] ?? 'Inconnu' }}
+                                        - Dr. {{ $ord['prescripteur']['NomComplet'] ?? 'Inconnu' }}
                                     </span>
                                 </div>
                                 <div class="divide-y divide-white/60">

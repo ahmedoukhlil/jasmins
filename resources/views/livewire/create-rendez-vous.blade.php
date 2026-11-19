@@ -21,7 +21,7 @@
                     </div>
                     <div class="text-sm text-primary-dark">
                         @if(!empty($selectedPatient['Telephone1']))Tél: {{ $selectedPatient['Telephone1'] }}@endif
-                        @if(!empty($selectedPatient['IdentifiantPatient'])) — N° Fiche: {{ $selectedPatient['IdentifiantPatient'] }}@endif
+                        @if(!empty($selectedPatient['IdentifiantPatient'])) - N° Fiche: {{ $selectedPatient['IdentifiantPatient'] }}@endif
                     </div>
                 </div>
                 <button type="button" wire:click="handlePatientCleared"

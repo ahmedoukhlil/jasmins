@@ -320,7 +320,7 @@
                                 @foreach($ord['ordonnances'] as $l)
                                 <span class="text-xs text-gray-600">
                                     <i class="fas fa-circle text-red-400 text-xs mr-0.5"></i>
-                                    {{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">— {{ $l['Utilisation'] }}</span>@endif
+                                    {{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">- {{ $l['Utilisation'] }}</span>@endif
                                 </span>
                                 @endforeach
                             </div>
@@ -376,7 +376,7 @@
                                 @foreach($ord['ordonnances'] as $l)
                                 <span class="text-xs text-gray-600">
                                     <i class="fas fa-circle text-{{ $typeIcon['color'] }}-400 text-xs mr-0.5"></i>
-                                    {{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">— {{ $l['Utilisation'] }}</span>@endif
+                                    {{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">- {{ $l['Utilisation'] }}</span>@endif
                                 </span>
                                 @endforeach
                             </div>
@@ -642,7 +642,7 @@
                                 <span class="text-xs font-mono text-red-600">{{ $ord['refOrd'] }}</span>
                                 <div class="flex-1 flex flex-wrap gap-x-3 gap-y-0.5">
                                     @foreach($ord['ordonnances'] ?? [] as $l)
-                                    <span class="text-xs text-gray-600">{{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">— {{ $l['Utilisation'] }}</span>@endif</span>
+                                    <span class="text-xs text-gray-600">{{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">- {{ $l['Utilisation'] }}</span>@endif</span>
                                     @endforeach
                                 </div>
                             </div>
@@ -674,7 +674,7 @@
                                 <span class="text-xs font-mono text-primary">{{ $ord['refOrd'] }}</span>
                                 <div class="flex-1 flex flex-wrap gap-x-3 gap-y-0.5">
                                     @foreach($ord['ordonnances'] ?? [] as $l)
-                                    <span class="text-xs text-gray-600">{{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">— {{ $l['Utilisation'] }}</span>@endif</span>
+                                    <span class="text-xs text-gray-600">{{ $l['Libelle'] }}@if(!empty($l['Utilisation'])) <span class="text-gray-400">- {{ $l['Utilisation'] }}</span>@endif</span>
                                     @endforeach
                                 </div>
                                 <a href="{{ route('ordonnance.print', ['id' => $ord['id']]) }}" target="_blank"
@@ -768,7 +768,7 @@
             {{-- Zone de dépôt de fichiers --}}
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Fichiers <span class="text-xs text-gray-400">(JPG, PNG, PDF, DOC — max 10 Mo chacun)</span>
+                    Fichiers <span class="text-xs text-gray-400">(JPG, PNG, PDF, DOC - max 10 Mo chacun)</span>
                 </label>
                 <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:border-primary hover:bg-blue-50 transition-colors">
                     <div class="flex flex-col items-center justify-center text-gray-400">
@@ -916,7 +916,7 @@
                         {{ $analysePreview['libelle'] }}
                         @if(!empty($analysePreview['date_analyse']))
                             <span class="text-gray-400 font-normal ml-1 text-xs">
-                                — {{ \Carbon\Carbon::parse($analysePreview['date_analyse'])->format('d/m/Y') }}
+                                - {{ \Carbon\Carbon::parse($analysePreview['date_analyse'])->format('d/m/Y') }}
                             </span>
                         @endif
                     </span>

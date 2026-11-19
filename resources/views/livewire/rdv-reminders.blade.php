@@ -93,13 +93,13 @@
                                 <div class="text-xs text-primary font-semibold">{{ \Carbon\Carbon::parse($rdv->HeureRdv)->format('H:i') }}</div>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap">
-                                <div class="font-medium text-gray-900 text-sm">{{ $rdv->patient->Nom ?? '—' }}</div>
+                                <div class="font-medium text-gray-900 text-sm">{{ $rdv->patient->Nom ?? '-' }}</div>
                                 @if($rdv->patient->Prenom ?? null)
                                     <div class="text-xs text-gray-500">{{ $rdv->patient->Prenom }}</div>
                                 @endif
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                                {{ $rdv->medecin->Nom ?? '—' }}
+                                {{ $rdv->medecin->Nom ?? '-' }}
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                                 {{ $rdv->ActePrevu ?: 'Consultation' }}
@@ -158,8 +158,8 @@
                                 {{ str_pad($rdv->OrdreRDV ?? $rdv->IDRdv, 2, '0', STR_PAD_LEFT) }}
                             </span>
                             <div>
-                                <div class="font-semibold text-gray-900">{{ $rdv->patient->Nom ?? '—' }}</div>
-                                <div class="text-xs text-gray-500">{{ $rdv->medecin->Nom ?? '—' }}</div>
+                                <div class="font-semibold text-gray-900">{{ $rdv->patient->Nom ?? '-' }}</div>
+                                <div class="text-xs text-gray-500">{{ $rdv->medecin->Nom ?? '-' }}</div>
                             </div>
                         </div>
                         <div class="text-right">

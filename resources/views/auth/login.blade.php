@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Connexion — SysMedical</title>
+    <title>Connexion - SysMedical</title>
     <link rel="stylesheet" href="/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -276,7 +276,7 @@
         </div>
 
         <div class="login-footer">
-            &copy; {{ date('Y') }} SysMedical — Tous droits réservés
+            &copy; {{ date('Y') }} SysMedical - Tous droits réservés
         </div>
     </div>
 

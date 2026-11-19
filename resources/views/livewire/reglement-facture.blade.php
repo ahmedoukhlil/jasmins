@@ -225,7 +225,7 @@
                                placeholder="Montant à régler">
                         <p class="text-xs text-gray-400 mt-1">
                             @if($factureSelectionnee['est_reglee'] ?? false)
-                                Facture déjà réglée — vous pouvez enregistrer un remboursement (montant négatif).
+                                Facture déjà réglée - vous pouvez enregistrer un remboursement (montant négatif).
                             @else
                                 Restant : {{ number_format($factureSelectionnee['reste_a_payer'] ?? 0, 2) }} MRU
                             @endif
@@ -369,7 +369,7 @@
                                     <i class="fas {{ ($stockDisponibleMedicament ?? 0) > 0 ? 'fa-check-circle' : 'fa-exclamation-triangle' }} mr-2"></i>
                                     {{ number_format($stockDisponibleMedicament ?? 0, 0) }} unité(s) disponible(s)
                                     @if(($stockDisponibleMedicament ?? 0) == 0)
-                                        <span class="text-xs block mt-1 font-normal">Stock épuisé — impossible d'ajouter</span>
+                                        <span class="text-xs block mt-1 font-normal">Stock épuisé - impossible d'ajouter</span>
                                     @elseif(($stockDisponibleMedicament ?? 0) < 10)
                                         <span class="text-xs block mt-1 font-normal text-orange-600">Stock faible</span>
                                     @endif

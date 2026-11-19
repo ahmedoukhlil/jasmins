@@ -61,7 +61,7 @@
                 <div class="bg-red-50 border border-red-200 rounded-lg p-3">
                     <p class="text-xs text-gray-500 mb-2">
                         {{ \Carbon\Carbon::parse($item['ref']['dtPrescript'])->format('d/m/Y à H:i') }}
-                        — Dr. {{ $item['ref']['prescripteur']['NomComplet'] ?? 'Inconnu' }}
+                        - Dr. {{ $item['ref']['prescripteur']['NomComplet'] ?? 'Inconnu' }}
                     </p>
                     @foreach($item['ordonnances'] as $ord)
                     <div class="text-sm mb-1 flex items-start gap-2">
@@ -69,7 +69,7 @@
                         <span>
                             <span class="font-medium text-gray-800">{{ $ord['Libelle'] }}</span>
                             @if($ord['Utilisation'])
-                            <span class="text-gray-500 ml-1">— {{ $ord['Utilisation'] }}</span>
+                            <span class="text-gray-500 ml-1">- {{ $ord['Utilisation'] }}</span>
                             @endif
                         </span>
                     </div>
@@ -151,9 +151,9 @@
                         <div class="text-sm font-medium text-gray-700 mb-2">
                             @if($modeOrdonnance === 'urgence')
                                 <span class="text-red-600"><i class="fas fa-bolt mr-1"></i>Traitement d'urgence</span>
-                                — @if($typeOrdonnance == 1) Médicaments déduits du stock @elseif($typeOrdonnance == 2) Analyses @else Radiologie @endif
+                                - @if($typeOrdonnance == 1) Médicaments déduits du stock @elseif($typeOrdonnance == 2) Analyses @else Radiologie @endif
                             @else
-                                {{ $this->typeOrdonnanceLibelle }} — Ordonnance de sortie
+                                {{ $this->typeOrdonnanceLibelle }} - Ordonnance de sortie
                             @endif
                         </div>
                         
@@ -212,14 +212,14 @@
                                                             <i class="fas fa-boxes text-[10px]"></i>
                                                             <span>En stock : <strong>{{ $qte }}</strong> unité(s)
                                                                 @if(!empty($ligne['stock_prix']))
-                                                                    — <strong>{{ number_format($ligne['stock_prix'], 0) }} MRU</strong>
+                                                                    - <strong>{{ number_format($ligne['stock_prix'], 0) }} MRU</strong>
                                                                 @endif
                                                             </span>
                                                         </div>
                                                     @else
                                                         <div class="mt-1.5 flex items-center gap-1.5 text-xs text-red-600">
                                                             <i class="fas fa-exclamation-triangle text-[10px]"></i>
-                                                            <span>Stock épuisé — ne sera pas facturé</span>
+                                                            <span>Stock épuisé - ne sera pas facturé</span>
                                                         </div>
                                                     @endif
                                                 @endif

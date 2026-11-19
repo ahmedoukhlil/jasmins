@@ -263,7 +263,7 @@
                     <td class="px-4 py-2.5 text-center" wire:key="perm-cell-{{ $rId }}-{{ $permId }}">
                         <button type="button"
                                 wire:click="togglePermission({{ $rId }}, {{ $permId }})"
-                                title="{{ $checked ? 'Retirer' : 'Accorder' }} — {{ $rLibell }}"
+                                title="{{ $checked ? 'Retirer' : 'Accorder' }} - {{ $rLibell }}"
                                 class="w-8 h-8 rounded-full flex items-center justify-center mx-auto transition-all border-2
                                        {{ $checked
                                             ? 'bg-'.$col.'-100 border-'.$col.'-400 text-'.$col.'-700 hover:bg-'.$col.'-200'
@@ -323,7 +323,7 @@
                     @error('role') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
 
-                {{-- Médecin lié — affiché uniquement pour les rôles Médecin (2) et Propriétaire (3) --}}
+                {{-- Médecin lié - affiché uniquement pour les rôles Médecin (2) et Propriétaire (3) --}}
                 @if(in_array($role, ['2', '3', 2, 3]))
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -331,7 +331,7 @@
                     </label>
                     <select wire:model.defer="fkidmedecin"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
-                        <option value="">— Sélectionner un médecin —</option>
+                        <option value="">- Sélectionner un médecin -</option>
                         @foreach(\App\Models\Medecin::orderBy('Nom')->get() as $med)
                             <option value="{{ $med->idMedecin }}">{{ $med->Nom }}</option>
                         @endforeach

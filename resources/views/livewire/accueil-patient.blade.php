@@ -12,7 +12,7 @@
             <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-0.5 leading-tight">{{ $nomCab }}</h1>
             <p class="text-white/80 text-xs sm:text-sm md:text-base">
                 {{ is_array(Auth::user()->typeuser) ? (Auth::user()->typeuser['Libelle'] ?? '') : (is_object(Auth::user()->typeuser) ? Auth::user()->typeuser->Libelle : Auth::user()->typeuser) }}
-                — <span class="font-bold">{{ Auth::user()->NomComplet ?? Auth::user()->name ?? '' }}</span>
+                - <span class="font-bold">{{ Auth::user()->NomComplet ?? Auth::user()->name ?? '' }}</span>
             </p>
         </div>
         <i class="fas fa-staff-snake text-4xl md:text-5xl opacity-20 flex-shrink-0"></i>
@@ -275,7 +275,7 @@
 
 
     {{-- ═══════════════════════════════════════════════════════
-         MODAUX — pattern unifié : .modal-overlay / .modal-box
+         MODAUX - pattern unifié : .modal-overlay / .modal-box
     ════════════════════════════════════════════════════════ --}}
 
     @php
@@ -629,7 +629,7 @@ $patientId = $selectedPatient
         <div class="modal-header">
             <div>
                 <h2><i class="fas fa-couch mr-2"></i>Salle d'attente</h2>
-                <p class="text-sm text-white/70">Rendez-vous du jour — cliquez sur un patient pour accéder à son dossier</p>
+                <p class="text-sm text-white/70">Rendez-vous du jour - cliquez sur un patient pour accéder à son dossier</p>
             </div>
             <button type="button" wire:click="fermerSalleAttenteModal" class="modal-close"><i class="fas fa-times"></i></button>
         </div>
@@ -647,7 +647,7 @@ $patientId = $selectedPatient
         <div class="modal-header">
             <div>
                 <h2><i class="fas fa-syringe mr-2"></i>Salle de soins</h2>
-                <p>Ordonnances internes prescrites aujourd'hui — soins à effectuer</p>
+                <p>Ordonnances internes prescrites aujourd'hui - soins à effectuer</p>
             </div>
             <button type="button" wire:click="fermerSalleSoinsModal" class="modal-close"><i class="fas fa-times"></i></button>
         </div>
@@ -797,7 +797,7 @@ if (!window._sysmedNotifInit) {
 
     window.addEventListener('nouveau-rdv-notif', e => {
         const d = e.detail;
-        const msg = d.heure ? `${d.nom} — ${d.heure}` : d.nom;
+        const msg = d.heure ? `${d.nom} - ${d.heure}` : d.nom;
         afficherNotifSalle('fa-calendar-check', 'Nouveau rendez-vous', msg, '#2563eb');
         rafraichirCompteurSalleAttente();
     });

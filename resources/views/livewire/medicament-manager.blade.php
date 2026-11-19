@@ -151,6 +151,10 @@
                             <button wire:click="openStockModal({{ $medicament->IDMedic }})" class="text-green-600 hover:text-green-800 text-sm font-medium">
                                 <i class="fas fa-plus-circle"></i> Stock
                             </button>
+                            <button wire:click="openAjustementModal({{ $medicament->IDMedic }})" class="text-amber-600 hover:text-amber-800 text-sm font-medium"
+                                title="Remplacer le stock par la quantité réellement comptée">
+                                <i class="fas fa-sliders-h"></i> Ajuster
+                            </button>
                             @endif
                             <button wire:click="confirmDelete({{ $medicament->IDMedic }})" class="text-red-600 hover:text-red-800 text-sm font-medium">
                                 <i class="fas fa-trash"></i>
@@ -207,6 +211,100 @@
                     <div class="modal-footer px-0 pb-0">
                         <button type="button" wire:click="closeModal" class="btn-secondary">Annuler</button>
                         <button type="submit" class="btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal ajustement de stock --}}
+    @if($showAjustementModal)
+    @php
+        $ecartAjustement = (float) $ajustementNouvelleQuantite - (float) $ajustementQuantiteActuelle;
+    @endphp
+    <div class="modal-overlay" style="z-index:70;">
+        <div class="modal-box max-w-lg w-full">
+            <div class="modal-header">
+                <div>
+                    <h2><i class="fas fa-sliders-h mr-2"></i>Ajuster le stock</h2>
+                    <p>Inventaire physique - {{ $ajustementLibelle }}</p>
+                </div>
+                <button type="button" wire:click="closeAjustementModal" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form wire:submit.prevent="enregistrerAjustement" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                            <p class="text-xs uppercase tracking-wide text-gray-500">Stock actuel</p>
+                            <p class="mt-1 text-2xl font-bold text-gray-800">
+                                {{ number_format((float) $ajustementQuantiteActuelle, 0) }}
+                            </p>
+                        </div>
+                        <div class="rounded-lg border p-3 {{ $ecartAjustement > 0 ? 'border-green-200 bg-green-50' : ($ecartAjustement < 0 ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-gray-50') }}">
+                            <p class="text-xs uppercase tracking-wide text-gray-500">Écart</p>
+                            <p class="mt-1 text-2xl font-bold {{ $ecartAjustement > 0 ? 'text-green-700' : ($ecartAjustement < 0 ? 'text-amber-700' : 'text-gray-600') }}">
+                                {{ $ecartAjustement > 0 ? '+' : '' }}{{ number_format($ecartAjustement, 0) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Quantité réellement comptée *
+                        </label>
+                        <input type="number" min="0" step="1" wire:model="ajustementNouvelleQuantite"
+                            class="form-input" autofocus required>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Cette quantité remplacera le stock actuel ; elle ne sera pas ajoutée à celui-ci.
+                        </p>
+                        @error('ajustementNouvelleQuantite')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    @if($ecartAjustement > 0)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Prix d’achat des unités ajoutées *
+                        </label>
+                        <input type="number" min="0" step="0.01" wire:model.defer="ajustementPrixNouveauStock"
+                            class="form-input" required>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Ce prix concerne uniquement les {{ number_format($ecartAjustement, 0) }} unité(s) ajoutée(s).
+                            Aucun coût moyen pondéré n’est calculé.
+                        </p>
+                        @error('ajustementPrixNouveauStock')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    @endif
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Motif de l’ajustement *</label>
+                        <textarea rows="3" maxlength="255" wire:model.defer="ajustementMotif" class="form-textarea"
+                            placeholder="Ex. Inventaire physique du 19/11/2026" required></textarea>
+                        @error('ajustementMotif')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+                        L’ajustement crée un mouvement d’inventaire traçable. En cas de diminution, les lots existants
+                        sont consommés en priorité ; le stock historique sans lot est également pris en charge.
+                    </div>
+
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" wire:click="closeAjustementModal" class="btn-secondary">Annuler</button>
+                        <button type="submit" class="btn-primary" wire:loading.attr="disabled"
+                            wire:target="enregistrerAjustement" @if(abs($ecartAjustement) < 0.00001) disabled @endif>
+                            <span wire:loading.remove wire:target="enregistrerAjustement">
+                                <i class="fas fa-save mr-1"></i> Enregistrer l’ajustement
+                            </span>
+                            <span wire:loading wire:target="enregistrerAjustement">Enregistrement...</span>
+                        </button>
                     </div>
                 </form>
             </div>

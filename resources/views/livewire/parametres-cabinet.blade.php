@@ -35,14 +35,14 @@
                 @if($logoFile)
                 <div>
                     <img src="{{ $logoFile->temporaryUrl() }}" alt="Aperçu" class="max-h-24 max-w-xs object-contain rounded-lg border border-dashed border-primary/40">
-                    <p class="text-xs text-center text-gray-400 mt-1">Aperçu — non encore enregistré</p>
+                    <p class="text-xs text-center text-gray-400 mt-1">Aperçu - non encore enregistré</p>
                 </div>
                 @endif
 
                 <label class="cursor-pointer flex flex-col items-center gap-2 px-6 py-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-primary/50 hover:bg-primary/5 transition-colors text-sm text-gray-500 w-full max-w-sm">
                     <i class="fas fa-cloud-upload-alt text-2xl text-gray-400"></i>
                     <span>Cliquer pour choisir un logo</span>
-                    <span class="text-xs text-gray-400">PNG, JPG, SVG — max 2 Mo</span>
+                    <span class="text-xs text-gray-400">PNG, JPG, SVG - max 2 Mo</span>
                     <input type="file" wire:model="logoFile" accept="image/*" class="hidden">
                 </label>
             </div>
@@ -203,7 +203,7 @@
                 <i class="fas fa-align-center text-primary"></i> Pied de page (bas des imprimés)
             </h3>
             <textarea wire:model.defer="piedPage" rows="3"
-                placeholder="Ex: Consultations sur rendez-vous — Tél: XX XX XX XX — Ouvert du lundi au vendredi"
+                placeholder="Ex: Consultations sur rendez-vous - Tél: XX XX XX XX - Ouvert du lundi au vendredi"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"></textarea>
             @if($piedPage)
             <div class="mt-2 p-2 bg-gray-50 rounded border border-gray-200 text-center text-xs text-gray-500 italic">
