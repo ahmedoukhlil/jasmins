@@ -20,6 +20,7 @@ use App\Models\StockMedicament;
 use App\Models\LotMedicament;
 use App\Models\Assureur;
 use App\Models\MouvementStock;
+use App\Services\StockService;
 
 class ReglementFacture extends Component
 {
@@ -276,32 +277,9 @@ class ReglementFacture extends Component
             // (pour les factures créées avant cette modification)
             $facture->refresh();
             if ($facture->estCompletementPayee()) {
-                // Vérifier si le stock a déjà été déduit pour cette facture
-                $detailsMedicaments = Detailfacturepatient::where('fkidfacture', $facture->Idfacture)
-                    ->where('IsAct', 2)
-                    ->whereNotNull('fkidmedicament')
-                    ->get();
-                
-                $stockDejaDeduit = true;
-                foreach ($detailsMedicaments as $detail) {
-                    $mouvement = MouvementStock::where('fkidFacture', $facture->Idfacture)
-                        ->where('fkidMedicament', $detail->fkidmedicament)
-                        ->where('typeMouvement', 'SORTIE')
-                        ->exists();
-                    
-                    if (!$mouvement) {
-                        $stockDejaDeduit = false;
-                        break;
-                    }
-                }
-                
-                // Si le stock n'a pas été déduit, le déduire maintenant (sécurité)
-                if (!$stockDejaDeduit) {
-                    \Log::info('Stock non déduit lors de la facturation, déduction lors du paiement (sécurité)', [
-                        'facture_id' => $facture->Idfacture
-                    ]);
-                    $this->deduireStockFacture($facture, $operation);
-                }
+                // Le service ignore les lignes déjà sorties : l'appel est idempotent,
+                // y compris pour les anciennes sorties enregistrées en minuscules.
+                $this->deduireStockFacture($facture, $operation);
             }
 
             DB::commit();
@@ -722,57 +700,12 @@ class ReglementFacture extends Component
 
             // Si c'est un médicament (IsAct = 2), restaurer le stock
             if ($detail->IsAct == 2 && $detail->fkidmedicament) {
-                $medicamentId = $detail->fkidmedicament;
-                $quantiteARestaurer = $detail->Quantite ?? 0;
-                
-                if ($quantiteARestaurer > 0) {
-                    $cabinetId = Auth::user()->fkidcabinet ?? 1;
-                    $stock = StockMedicament::where('fkidMedicament', $medicamentId)
-                        ->where('fkidCabinet', $cabinetId)
-                        ->where('Masquer', 0)
-                        ->first();
-                    
-                    if ($stock) {
-                        // Restaurer la quantité dans le stock
-                        $stock->quantiteStock += $quantiteARestaurer;
-                        $stock->save();
-                        
-                        // Essayer de restaurer dans les lots (si des mouvements de stock existent pour ce détail)
-                        $mouvementsLot = MouvementStock::where('fkidDetailFacture', $detailId)
-                            ->where('fkidMedicament', $medicamentId)
-                            ->where('typeMouvement', 'SORTIE')
-                            ->whereNotNull('fkidLot')
-                            ->orderBy('dateMouvement', 'desc') // Restaurer dans l'ordre inverse
-                            ->get();
-                        
-                        $quantiteRestanteARestaurer = $quantiteARestaurer;
-                        foreach ($mouvementsLot as $mouvement) {
-                            if ($quantiteRestanteARestaurer <= 0) {
-                                break;
-                            }
-                            
-                            $lot = LotMedicament::find($mouvement->fkidLot);
-                            if ($lot) {
-                                $quantiteDuMouvement = abs($mouvement->quantite);
-                                $quantiteARestaurerDansLot = min($quantiteDuMouvement, $quantiteRestanteARestaurer);
-                                $lot->quantiteRestante += $quantiteARestaurerDansLot;
-                                $lot->save();
-                                $quantiteRestanteARestaurer -= $quantiteARestaurerDansLot;
-                            }
-                        }
-                        
-                        \Log::info('Stock restauré lors de la suppression d\'un médicament de la facture', [
-                            'detail_id' => $detailId,
-                            'medicament_id' => $medicamentId,
-                            'quantite_restauree' => $quantiteARestaurer,
-                            'quantite_restauree_dans_lots' => $quantiteARestaurer - $quantiteRestanteARestaurer,
-                            'stock_apres_restauration' => $stock->quantiteStock
-                        ]);
-                    }
-                    
-                    // Supprimer les mouvements de stock liés à ce détail
-                    MouvementStock::where('fkidDetailFacture', $detailId)->delete();
-                }
+                // Une ligne non encore payée n'a aucun mouvement et ne restaure donc
+                // rien. Cela empêche la création de stock fictif.
+                app(StockService::class)->restoreForDetail(
+                    (int) $detailId,
+                    (int) (Auth::user()->fkidcabinet ?? 1)
+                );
             }
 
             // Calculer le montant à soustraire
@@ -955,33 +888,20 @@ class ReglementFacture extends Component
      */
     protected function deduireStockMedicament(StockMedicament $stock, $quantite, $factureId, $detailId, $libelleMedicament)
     {
-        $userId = Auth::id();
-        $medicamentId = $stock->fkidMedicament;
         $facture = \App\Models\Facture::find($factureId);
-
-        // Déduire directement de quantiteStock
-        $stock->quantiteStock = max(0, $stock->quantiteStock - $quantite);
-        $stock->dateDerniereSortie = Carbon::now();
-        $stock->save();
-
-        // Enregistrer le mouvement de sortie
-        MouvementStock::create([
-            'fkidStock'          => $stock->idStock,
-            'fkidMedicament'     => $medicamentId,
-            'fkidLot'            => null,
-            'typeMouvement'      => 'SORTIE',
-            'quantite'           => $quantite,
-            'prixUnitaire'       => $stock->prixAchat,
-            'montantTotal'       => $stock->prixAchat * $quantite,
-            'motif'              => 'Vente - Facture N°' . ($facture->Nfacture ?? $factureId),
-            'fkidFacture'        => $factureId,
-            'fkidDetailFacture'  => $detailId,
-            'fkidPatient'        => $facture->IDPatient ?? null,
-            'fkidUser'           => $userId,
-            'dateMouvement'      => Carbon::now(),
-            'reference'          => $facture->Nfacture ?? null,
-            'notes'              => 'Déduction automatique lors de la facturation'
-        ]);
+        app(StockService::class)->deductForInvoiceDetail(
+            (int) $stock->idStock,
+            (float) $quantite,
+            (int) $detailId,
+            [
+                'factureId' => (int) $factureId,
+                'patientId' => $facture ? (int) $facture->IDPatient : null,
+                'userId' => (int) Auth::id(),
+                'reference' => $facture->Nfacture ?? (string) $factureId,
+                'motif' => 'Vente - Facture N°' . ($facture->Nfacture ?? $factureId),
+                'notes' => 'Déduction automatique lors de la facturation',
+            ]
+        );
     }
 
     /**
@@ -1022,42 +942,19 @@ class ReglementFacture extends Component
                 continue;
             }
             
-            // Vérifier si le stock a déjà été déduit pour cette facture
-            $dejaDeduit = MouvementStock::where('fkidFacture', $facture->Idfacture)
-                ->where('fkidDetailFacture', $detail->idDetfacture)
-                ->where('typeMouvement', 'SORTIE')
-                ->exists();
-            
-            if ($dejaDeduit) {
-                \Log::info('Stock déjà déduit pour ce détail de facture', [
-                    'detail_id' => $detail->idDetfacture,
-                    'facture_id' => $facture->Idfacture
-                ]);
-                continue;
-            }
-            
-            // Déduire directement de quantiteStock
-            $stock->quantiteStock = max(0, $stock->quantiteStock - $quantiteADeduire);
-            $stock->dateDerniereSortie = Carbon::now();
-            $stock->save();
-
-            MouvementStock::create([
-                'fkidStock'         => $stock->idStock,
-                'fkidMedicament'    => $medicamentId,
-                'fkidLot'           => null,
-                'typeMouvement'     => 'SORTIE',
-                'quantite'          => $quantiteADeduire,
-                'prixUnitaire'      => $stock->prixAchat,
-                'montantTotal'      => $stock->prixAchat * $quantiteADeduire,
-                'motif'             => 'Vente - Facture N°' . $facture->Nfacture,
-                'fkidFacture'       => $facture->Idfacture,
-                'fkidDetailFacture' => $detail->idDetfacture,
-                'fkidPatient'       => $facture->IDPatient,
-                'fkidUser'          => $userId,
-                'dateMouvement'     => Carbon::now(),
-                'reference'         => $facture->Nfacture,
-                'notes'             => 'Déduction automatique lors du paiement complet'
-            ]);
+            app(StockService::class)->deductForInvoiceDetail(
+                (int) $stock->idStock,
+                (float) $quantiteADeduire,
+                (int) $detail->idDetfacture,
+                [
+                    'factureId' => (int) $facture->Idfacture,
+                    'patientId' => (int) $facture->IDPatient,
+                    'userId' => (int) $userId,
+                    'reference' => $facture->Nfacture,
+                    'motif' => 'Vente - Facture N°' . $facture->Nfacture,
+                    'notes' => 'Rattrapage d\'une ancienne facture sans sortie de stock',
+                ]
+            );
         }
     }
 
@@ -1082,77 +979,10 @@ class ReglementFacture extends Component
                 return;
             }
             
-            // 1. Restaurer le stock à partir des mouvements de stock ET des détails de facture
+            // 1. Restaurer uniquement les sorties réellement passées. Une facture
+            // non payée n'a pas de sortie et ne crée donc plus de stock fictif.
             $cabinetId = Auth::user()->fkidcabinet ?? 1;
-            
-            // Récupérer tous les détails de facture qui sont des médicaments (IsAct = 2)
-            $detailsMedicaments = Detailfacturepatient::where('fkidfacture', $factureId)
-                ->where('IsAct', 2) // Médicaments
-                ->whereNotNull('fkidmedicament')
-                ->get();
-            
-            // Grouper par médicament pour restaurer les quantités
-            $medicamentsARestaurer = [];
-            foreach ($detailsMedicaments as $detail) {
-                $medicamentId = $detail->fkidmedicament;
-                $quantite = $detail->Quantite ?? 0;
-                
-                if ($medicamentId && $quantite > 0) {
-                    if (!isset($medicamentsARestaurer[$medicamentId])) {
-                        $medicamentsARestaurer[$medicamentId] = 0;
-                    }
-                    $medicamentsARestaurer[$medicamentId] += $quantite;
-                }
-            }
-            
-            // Restaurer le stock pour chaque médicament
-            foreach ($medicamentsARestaurer as $medicamentId => $quantiteARestaurer) {
-                $stock = StockMedicament::where('fkidMedicament', $medicamentId)
-                    ->where('fkidCabinet', $cabinetId)
-                    ->where('Masquer', 0)
-                    ->first();
-                
-                if ($stock) {
-                    // Restaurer la quantité dans le stock
-                    $stock->quantiteStock += $quantiteARestaurer;
-                    $stock->save();
-                    
-                    // Essayer de restaurer dans les lots (si des mouvements de stock existent)
-                    $mouvementsLot = MouvementStock::where('fkidFacture', $factureId)
-                        ->where('fkidMedicament', $medicamentId)
-                        ->where('typeMouvement', 'SORTIE')
-                        ->whereNotNull('fkidLot')
-                        ->orderBy('dateMouvement', 'desc') // Restaurer dans l'ordre inverse (dernier d'abord)
-                        ->get();
-                    
-                    $quantiteRestanteARestaurer = $quantiteARestaurer;
-                    foreach ($mouvementsLot as $mouvement) {
-                        if ($quantiteRestanteARestaurer <= 0) {
-                            break;
-                        }
-                        
-                        $lot = LotMedicament::find($mouvement->fkidLot);
-                        if ($lot) {
-                            $quantiteDuMouvement = abs($mouvement->quantite);
-                            $quantiteARestaurerDansLot = min($quantiteDuMouvement, $quantiteRestanteARestaurer);
-                            $lot->quantiteRestante += $quantiteARestaurerDansLot;
-                            $lot->save();
-                            $quantiteRestanteARestaurer -= $quantiteARestaurerDansLot;
-                        }
-                    }
-                    
-                    // Si toute la quantité n'a pas pu être restaurée dans les lots, elle est déjà dans le stock général
-                    \Log::info('Stock restauré pour médicament', [
-                        'medicament_id' => $medicamentId,
-                        'quantite_restauree' => $quantiteARestaurer,
-                        'quantite_restauree_dans_lots' => $quantiteARestaurer - $quantiteRestanteARestaurer,
-                        'stock_apres_restauration' => $stock->quantiteStock
-                    ]);
-                }
-            }
-            
-            // Supprimer tous les mouvements de stock liés
-            MouvementStock::where('fkidFacture', $factureId)->delete();
+            app(StockService::class)->restoreForInvoice((int) $factureId, (int) $cabinetId);
             
             // 2. Supprimer les opérations de caisse liées
             $operationsCaisse = CaisseOperation::where('fkidfacturebord', $factureId)->get();
@@ -1247,4 +1077,4 @@ class ReglementFacture extends Component
             'factures'                => $factures,
         ]);
     }
-} 
+}

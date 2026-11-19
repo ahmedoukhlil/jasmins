@@ -8,6 +8,7 @@ use App\Models\Medicament;
 use App\Models\StockMedicament;
 use App\Models\LotMedicament;
 use App\Models\MouvementStock;
+use App\Services\StockService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -259,68 +260,21 @@ class MedicamentManager extends Component
             'stockQuantiteMin.required' => 'Le seuil minimum est requis',
         ]);
 
-        DB::transaction(function () {
-            $cabinetId = Auth::user()->fkidcabinet ?? 1;
-            $userId = Auth::id();
-
-            // Récupérer ou créer le stock
-            $stock = StockMedicament::firstOrCreate(
-                [
-                    'fkidMedicament' => $this->stockMedicamentId,
-                    'fkidCabinet' => $cabinetId
-                ],
-                [
-                    'quantiteStock' => 0,
-                    'quantiteMin' => $this->stockQuantiteMin,
-                    'prixAchat' => $this->stockPrixAchat,
-                    'Masquer' => 0
-                ]
-            );
-
-            // Créer le lot si date d'expiration renseignée
-            $lotId = null;
-            if ($this->stockDateExpiration) {
-                $lot = LotMedicament::create([
-                    'fkidStock' => $stock->idStock,
-                    'fkidMedicament' => $this->stockMedicamentId,
-                    'numeroLot' => $this->stockNumeroLot ?: null,
-                    'quantiteInitiale' => $this->stockQuantite,
-                    'quantiteRestante' => $this->stockQuantite,
-                    'dateExpiration' => $this->stockDateExpiration,
-                    'dateEntree' => Carbon::now(),
-                    'prixAchatUnitaire' => $this->stockPrixAchat,
-                    'fournisseur' => $this->stockFournisseur ?: null,
-                    'referenceFacture' => $this->stockReferenceFacture ?: null,
-                    'fkidUser' => $userId,
-                    'Masquer' => 0
-                ]);
-                $lotId = $lot->idLot;
-            }
-
-            // Mettre à jour le stock avec le prix saisi directement
-            $stock->update([
-                'quantiteStock' => $stock->quantiteStock + $this->stockQuantite,
-                'prixAchat' => $this->stockPrixAchat,
-                'quantiteMin' => $this->stockQuantiteMin,
-                'dateDerniereEntree' => Carbon::now()
-            ]);
-
-            // Créer le mouvement
-            MouvementStock::create([
-                'fkidStock' => $stock->idStock,
-                'fkidMedicament' => $this->stockMedicamentId,
-                'fkidLot' => $lotId,
-                'typeMouvement' => 'ENTREE',
-                'quantite' => $this->stockQuantite,
-                'prixUnitaire' => $this->stockPrixAchat,
-                'montantTotal' => $this->stockPrixAchat * $this->stockQuantite,
-                'motif' => 'Entrée de stock',
-                'fkidUser' => $userId,
-                'dateMouvement' => Carbon::now(),
+        app(StockService::class)->addEntry(
+            (int) $this->stockMedicamentId,
+            (int) (Auth::user()->fkidcabinet ?? 1),
+            (float) $this->stockQuantite,
+            (float) $this->stockPrixAchat,
+            (int) Auth::id(),
+            [
+                'quantiteMin' => (float) $this->stockQuantiteMin,
+                'numeroLot' => $this->stockNumeroLot ?: null,
+                'dateExpiration' => $this->stockDateExpiration,
+                'fournisseur' => $this->stockFournisseur ?: null,
                 'reference' => $this->stockReferenceFacture ?: null,
-                'notes' => 'Ajout depuis la liste des médicaments'
-            ]);
-        });
+                'notes' => 'Ajout depuis la liste des médicaments',
+            ]
+        );
 
         session()->flash('message', 'Stock ajouté avec succès.');
         // Réinitialiser les champs sauf le médicament pour permettre d'ajouter plus de stock

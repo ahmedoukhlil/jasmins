@@ -12,6 +12,7 @@ use App\Models\Patient;
 use App\Models\Facture;
 use App\Models\Detailfacturepatient;
 use App\Models\Medecin;
+use App\Services\StockService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -299,26 +300,13 @@ class PharmacieManager extends Component
             return;
         }
 
-        DB::transaction(function () use ($stock, $nouvelleQuantite, $ecart, $userId) {
-            MouvementStock::create([
-                'fkidStock'     => $stock->idStock,
-                'fkidMedicament'=> $this->ajustementMedicamentId,
-                'fkidLot'       => null,
-                'typeMouvement' => 'AJUSTEMENT',
-                'quantite'      => $ecart,
-                'prixUnitaire'  => $stock->prixAchat,
-                'montantTotal'  => $stock->prixAchat * abs($ecart),
-                'motif'         => $this->ajustementMotif,
-                'fkidUser'      => $userId,
-                'dateMouvement' => Carbon::now(),
-                'reference'     => null,
-                'notes'         => 'Ajustement d\'inventaire',
-            ]);
-
-            $stock->update([
-                'quantiteStock' => $nouvelleQuantite,
-            ]);
-        });
+        app(StockService::class)->adjustStock(
+            (int) $stock->idStock,
+            $nouvelleQuantite,
+            (float) $this->ajustementPrixNouveauStock,
+            $this->ajustementMotif,
+            (int) $userId
+        );
 
         session()->flash('message', 'Stock ajusté avec succès (' . ($ecart > 0 ? '+' : '') . number_format($ecart, 0) . ').');
         $this->closeAjustementModal();
@@ -447,68 +435,21 @@ class PharmacieManager extends Component
             'entreeQuantiteMin.required' => 'Le seuil minimum est requis',
         ]);
 
-        DB::transaction(function () {
-            $cabinetId = Auth::user()->fkidcabinet;
-            $userId = Auth::id();
-
-            // Récupérer ou créer le stock
-            $stock = StockMedicament::firstOrCreate(
-                [
-                    'fkidMedicament' => $this->entreeMedicamentId,
-                    'fkidCabinet' => $cabinetId
-                ],
-                [
-                    'quantiteStock' => 0,
-                    'quantiteMin' => $this->entreeQuantiteMin,
-                    'prixAchat' => $this->entreePrixAchat,
-                    'Masquer' => 0
-                ]
-            );
-
-            // Créer le lot si date d'expiration renseignée
-            $lotId = null;
-            if ($this->entreeDateExpiration) {
-                $lot = LotMedicament::create([
-                    'fkidStock' => $stock->idStock,
-                    'fkidMedicament' => $this->entreeMedicamentId,
-                    'numeroLot' => $this->entreeNumeroLot ?: null,
-                    'quantiteInitiale' => $this->entreeQuantite,
-                    'quantiteRestante' => $this->entreeQuantite,
-                    'dateExpiration' => $this->entreeDateExpiration,
-                    'dateEntree' => Carbon::now(),
-                    'prixAchatUnitaire' => $this->entreePrixAchat,
-                    'fournisseur' => $this->entreeFournisseur ?: null,
-                    'referenceFacture' => $this->entreeReferenceFacture ?: null,
-                    'fkidUser' => $userId,
-                    'Masquer' => 0
-                ]);
-                $lotId = $lot->idLot;
-            }
-
-            // Mettre à jour le stock
-            $stock->update([
-                'quantiteStock' => $stock->quantiteStock + $this->entreeQuantite,
-                'prixAchat' => $this->entreePrixAchat,
-                'quantiteMin' => $this->entreeQuantiteMin,
-                'dateDerniereEntree' => Carbon::now()
-            ]);
-
-            // Créer le mouvement
-            MouvementStock::create([
-                'fkidStock' => $stock->idStock,
-                'fkidMedicament' => $this->entreeMedicamentId,
-                'fkidLot' => $lotId,
-                'typeMouvement' => 'ENTREE',
-                'quantite' => $this->entreeQuantite,
-                'prixUnitaire' => $this->entreePrixAchat,
-                'montantTotal' => $this->entreePrixAchat * $this->entreeQuantite,
-                'motif' => 'Entrée de stock',
-                'fkidUser' => $userId,
-                'dateMouvement' => Carbon::now(),
+        app(StockService::class)->addEntry(
+            (int) $this->entreeMedicamentId,
+            (int) Auth::user()->fkidcabinet,
+            (float) $this->entreeQuantite,
+            (float) $this->entreePrixAchat,
+            (int) Auth::id(),
+            [
+                'quantiteMin' => (float) $this->entreeQuantiteMin,
+                'numeroLot' => $this->entreeNumeroLot ?: null,
+                'dateExpiration' => $this->entreeDateExpiration,
+                'fournisseur' => $this->entreeFournisseur ?: null,
                 'reference' => $this->entreeReferenceFacture ?: null,
-                'notes' => $this->entreeNotes ?: null
-            ]);
-        });
+                'notes' => $this->entreeNotes ?: null,
+            ]
+        );
 
         session()->flash('message', 'Entrée de stock enregistrée avec succès.');
         $this->closeEntreeModal();
@@ -712,6 +653,7 @@ class PharmacieManager extends Component
                 // Vérifier le stock disponible en utilisant la même logique centralisée
                 $stock = StockMedicament::where('fkidMedicament', $item['medicamentId'])
                     ->where('fkidCabinet', $user->fkidcabinet)
+                    ->lockForUpdate()
                     ->first();
 
                 if (!$stock) {
@@ -721,11 +663,10 @@ class PharmacieManager extends Component
                 // Calculer la quantité déjà facturée mais non payée pour ce médicament
                 // Prendre en compte TOUTES les factures non payées (pas seulement celles du patient)
                 // pour une meilleure gestion du stock global
-                $quantiteDejaFacturee = Detailfacturepatient::join('facture', 'detailfacturepatient.fkidfacture', '=', 'facture.Idfacture')
-                    ->where('detailfacturepatient.fkidmedicament', $item['medicamentId'])
-                    ->where('detailfacturepatient.IsAct', 2)
-                    ->whereRaw('(CASE WHEN facture.ISTP > 0 THEN facture.TotalfactPatient ELSE facture.TotFacture END) > (facture.TotReglPatient + COALESCE(facture.ReglementPEC, 0))')
-                    ->sum('detailfacturepatient.Quantite');
+                $quantiteDejaFacturee = app(StockService::class)->reservedQuantity(
+                    (int) $item['medicamentId'],
+                    (int) $user->fkidcabinet
+                );
 
                 $stockDisponible = $stock->quantiteStock - $quantiteDejaFacturee;
 
@@ -763,6 +704,27 @@ class PharmacieManager extends Component
                     'user' => $user->NomComplet ?? 'System',
                     'DtActe' => Carbon::now()
                 ]);
+
+                // La création de la facture valide la remise du médicament :
+                // la sortie physique ne dépend donc plus de son règlement.
+                $stock = StockMedicament::where('fkidMedicament', $item['medicamentId'])
+                    ->where('fkidCabinet', $user->fkidcabinet)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                app(StockService::class)->deductForInvoiceDetail(
+                    (int) $stock->idStock,
+                    (float) $item['quantite'],
+                    (int) $detail->idDetfacture,
+                    [
+                        'factureId' => (int) $facture->Idfacture,
+                        'patientId' => (int) $this->patientId,
+                        'userId' => (int) Auth::id(),
+                        'reference' => $nfacture,
+                        'motif' => 'Vente pharmacie - Facture N°' . $nfacture,
+                        'notes' => 'Déduction automatique lors de la validation de la facture',
+                    ]
+                );
             }
 
             // Mettre à jour le total de la facture
@@ -775,7 +737,7 @@ class PharmacieManager extends Component
             $this->showFactureModal = true;
 
             DB::commit();
-            session()->flash('message', 'Facture créée avec succès. Le stock sera déduit lors du paiement complet de la facture.');
+            session()->flash('message', 'Facture créée avec succès. Le stock des médicaments remis a été déduit.');
             $this->calculerAlertes();
 
         } catch (\Exception $e) {
@@ -807,7 +769,7 @@ class PharmacieManager extends Component
         }
 
         if ($this->filterTypeMouvement) {
-            $query->where('typeMouvement', $this->filterTypeMouvement);
+            $query->whereRaw('UPPER(typeMouvement) = ?', [strtoupper($this->filterTypeMouvement)]);
         }
 
         if ($this->filterDateDebut) {
@@ -889,14 +851,19 @@ class PharmacieManager extends Component
             })
             ->count();
 
-        // Valeur totale du stock (quantité * prix d'achat moyen)
-        $valeurStock = StockMedicament::where('fkidCabinet', $cabinetId)
+        // Valeur totale selon le prix exact des lots, avec compatibilité pour
+        // l'ancien stock qui ne possède pas encore de lot.
+        $stocksPourValorisation = StockMedicament::where('fkidCabinet', $cabinetId)
             ->where('Masquer', 0)
             ->whereHas('medicament', function($q) {
                 $q->where('fkidtype', 1);
             })
-            ->selectRaw('SUM(quantiteStock * prixAchat) as total')
-            ->value('total') ?? 0;
+            ->with('lots')
+            ->get();
+        $stockService = app(StockService::class);
+        $valeurStock = $stocksPourValorisation->sum(function ($stock) use ($stockService) {
+            return $stockService->stockValue($stock);
+        });
 
         // Total des quantités en stock
         $totalQuantiteStock = StockMedicament::where('fkidCabinet', $cabinetId)
@@ -910,7 +877,7 @@ class PharmacieManager extends Component
         $entreesCeMois = MouvementStock::whereHas('stock', function($q) use ($cabinetId) {
                 $q->where('fkidCabinet', $cabinetId);
             })
-            ->where('typeMouvement', 'ENTREE')
+            ->whereRaw('UPPER(typeMouvement) = ?', ['ENTREE'])
             ->whereMonth('dateMouvement', Carbon::now()->month)
             ->whereYear('dateMouvement', Carbon::now()->year)
             ->count();
@@ -919,7 +886,7 @@ class PharmacieManager extends Component
         $sortiesCeMois = MouvementStock::whereHas('stock', function($q) use ($cabinetId) {
                 $q->where('fkidCabinet', $cabinetId);
             })
-            ->where('typeMouvement', 'SORTIE')
+            ->whereRaw('UPPER(typeMouvement) = ?', ['SORTIE'])
             ->whereMonth('dateMouvement', Carbon::now()->month)
             ->whereYear('dateMouvement', Carbon::now()->year)
             ->count();
@@ -949,17 +916,17 @@ class PharmacieManager extends Component
         // Bénéfice des ventes facturées et payées
         // Sorties liées à une facture encaissée (estfacturer=1 ou TotReglPatient > 0)
         $beneficeVentes = \DB::table('mouvements_stock as ms')
-            ->join('lots_medicaments as lm', 'ms.fkidLot', '=', 'lm.idLot')
             ->join('stock_medicaments as sm', 'ms.fkidStock', '=', 'sm.idStock')
             ->join('facture as f', 'ms.fkidFacture', '=', 'f.Idfacture')
+            ->join('detailfacturepatient as df', 'ms.fkidDetailFacture', '=', 'df.idDetfacture')
             ->where('sm.fkidCabinet', $cabinetId)
-            ->where('ms.typeMouvement', 'SORTIE')
+            ->whereRaw('UPPER(ms.typeMouvement) = ?', ['SORTIE'])
             ->whereNotNull('ms.fkidFacture')
             ->where(function($q) {
                 $q->where('f.estfacturer', 1)
                   ->orWhere('f.TotReglPatient', '>', 0);
             })
-            ->selectRaw('SUM((ms.prixUnitaire - lm.prixAchatUnitaire) * ABS(ms.quantite)) as benefice')
+            ->selectRaw('SUM((df.PrixFacture - ms.prixUnitaire) * ABS(ms.quantite)) as benefice')
             ->value('benefice') ?? 0;
 
         return [
@@ -1004,13 +971,7 @@ class PharmacieManager extends Component
                     ->orderBy('quantiteStock', 'desc')
                     ->get()
                     ->map(function($stock) {
-                        $valeur = $stock->lots->sum(function($l) {
-                            return (float)$l->quantiteRestante * (float)$l->prixAchatUnitaire;
-                        });
-                        // Fallback si aucun lot (stock ancien sans lot) : utiliser prix moyen
-                        if ($valeur == 0 && $stock->quantiteStock > 0) {
-                            $valeur = $stock->quantiteStock * $stock->prixAchat;
-                        }
+                        $valeur = app(StockService::class)->stockValue($stock);
                         return [
                             'medicament_id' => $stock->medicament->IDMedic ?? null,
                             'medicament' => $stock->medicament->LibelleMedic ?? 'N/A',
@@ -1031,14 +992,14 @@ class PharmacieManager extends Component
                     ->whereHas('medicament', function($q) {
                         $q->where('fkidtype', 1);
                     })
-                    ->with('medicament')
+                    ->with(['medicament', 'lots'])
                     ->get()
                     ->map(function($stock) {
                         return [
                             'medicament' => $stock->medicament->LibelleMedic ?? 'N/A',
                             'quantite' => $stock->quantiteStock,
                             'prix_achat' => $stock->prixAchat,
-                            'valeur' => $stock->quantiteStock * $stock->prixAchat,
+                            'valeur' => app(StockService::class)->stockValue($stock),
                         ];
                     })
                     ->sortByDesc('valeur')
@@ -1162,7 +1123,7 @@ class PharmacieManager extends Component
                 $this->detailData = MouvementStock::whereHas('stock', function($q) use ($cabinetId) {
                         $q->where('fkidCabinet', $cabinetId);
                     })
-                    ->where('typeMouvement', 'ENTREE')
+                    ->whereRaw('UPPER(typeMouvement) = ?', ['ENTREE'])
                     ->whereMonth('dateMouvement', Carbon::now()->month)
                     ->whereYear('dateMouvement', Carbon::now()->year)
                     ->with(['medicament', 'user', 'lot'])
@@ -1190,7 +1151,7 @@ class PharmacieManager extends Component
                 $this->detailData = MouvementStock::whereHas('stock', function($q) use ($cabinetId) {
                         $q->where('fkidCabinet', $cabinetId);
                     })
-                    ->where('typeMouvement', 'SORTIE')
+                    ->whereRaw('UPPER(typeMouvement) = ?', ['SORTIE'])
                     ->whereMonth('dateMouvement', Carbon::now()->month)
                     ->whereYear('dateMouvement', Carbon::now()->year)
                     ->where('quantite', '!=', 0) // Exclure les quantités nulles

@@ -29,6 +29,10 @@ use Carbon\Carbon;
  */
 class MouvementStock extends Model
 {
+    public const TYPE_ENTREE = 'ENTREE';
+    public const TYPE_SORTIE = 'SORTIE';
+    public const TYPE_AJUSTEMENT = 'AJUSTEMENT';
+
     protected $table = 'mouvements_stock';
     protected $primaryKey = 'idMouvement';
     public $timestamps = false;
@@ -64,6 +68,11 @@ class MouvementStock extends Model
         'reference',
         'notes'
     ];
+
+    public function setTypeMouvementAttribute($value)
+    {
+        $this->attributes['typeMouvement'] = strtoupper(trim((string) $value));
+    }
 
     // Relations
     public function stock()
@@ -104,17 +113,17 @@ class MouvementStock extends Model
     // Scopes
     public function scopeEntrees($query)
     {
-        return $query->where('typeMouvement', 'ENTREE');
+        return $query->whereRaw('UPPER(typeMouvement) = ?', [self::TYPE_ENTREE]);
     }
 
     public function scopeSorties($query)
     {
-        return $query->where('typeMouvement', 'SORTIE');
+        return $query->whereRaw('UPPER(typeMouvement) = ?', [self::TYPE_SORTIE]);
     }
 
     public function scopeAjustements($query)
     {
-        return $query->where('typeMouvement', 'AJUSTEMENT');
+        return $query->whereRaw('UPPER(typeMouvement) = ?', [self::TYPE_AJUSTEMENT]);
     }
 
     public function scopeParPeriode($query, $dateDebut, $dateFin)

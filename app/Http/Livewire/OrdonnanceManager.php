@@ -11,6 +11,7 @@ use App\Models\Facture;
 use App\Models\Detailfacturepatient;
 use App\Models\StockMedicament;
 use App\Models\MouvementStock;
+use App\Services\StockService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -436,7 +437,7 @@ class OrdonnanceManager extends Component
                         $stock = StockMedicament::where('fkidMedicament', $ligne['medicament_id'])
                             ->where('fkidCabinet', Auth::user()->fkidcabinet)
                             ->where('Masquer', 0)
-                            ->where('quantiteStock', '>', 0)
+                            ->where('quantiteStock', '>=', $quantite)
                             ->first();
 
                         if (!$stock) {
@@ -447,10 +448,6 @@ class OrdonnanceManager extends Component
 
                         $prix = $medicament->PrixRef ?? 0;
 
-                        // Décrémenter le stock
-                        $stock->quantiteStock     -= $quantite;
-                        $stock->dateDerniereSortie = now();
-                        $stock->save();
                     } else {
                         // Analyse (type 2) ou Radio (type 3) : pas de stock, prix depuis PrixRef
                         $prix = $medicament->PrixRef ?? 0;
@@ -479,23 +476,20 @@ class OrdonnanceManager extends Component
                     $derniereFacture->TotalfactPatient  = $derniereFacture->TotFacture - $derniereFacture->TotalPEC;
                     $derniereFacture->save();
 
-                    // Mouvement de stock uniquement pour les médicaments
+                    // Sortie atomique et idempotente, avec consommation des lots.
                     if ($this->typeOrdonnance == 1 && $stock) {
-                        MouvementStock::create([
-                            'fkidStock'         => $stock->idStock,
-                            'fkidMedicament'    => $ligne['medicament_id'],
-                            'typeMouvement'     => 'sortie',
-                            'quantite'          => $quantite,
-                            'prixUnitaire'      => $prix,
-                            'montantTotal'      => $prix * $quantite,
-                            'motif'             => 'Ordonnance ' . $refOrd,
-                            'fkidFacture'       => $derniereFacture->Idfacture,
-                            'fkidDetailFacture' => $detail->idDetfacture,
-                            'fkidPatient'       => $this->patientId,
-                            'fkidUser'          => Auth::id(),
-                            'dateMouvement'     => now(),
-                            'reference'         => $refOrd,
-                        ]);
+                        app(StockService::class)->deductForInvoiceDetail(
+                            (int) $stock->idStock,
+                            (float) $quantite,
+                            (int) $detail->idDetfacture,
+                            [
+                                'factureId' => (int) $derniereFacture->Idfacture,
+                                'patientId' => (int) $this->patientId,
+                                'userId' => (int) Auth::id(),
+                                'reference' => $refOrd,
+                                'motif' => 'Ordonnance ' . $refOrd,
+                            ]
+                        );
                     }
 
                     $itemsFactures++;
