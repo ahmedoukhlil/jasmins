@@ -13,6 +13,7 @@ class PatientSearch extends Component
     public $patients = [];
     public $selectedPatient = null;
     public $isSearching = false;
+    public $searchDomId;
     public $showResults = false;
 
     protected $listeners = [
@@ -22,11 +23,12 @@ class PatientSearch extends Component
 
     public function mount()
     {
+        $this->searchDomId = 'patient-search-' . uniqid();
     }
 
     public function updatedSearch()
     {
-        if (strlen(trim($this->search)) >= 1) {
+        if (strlen(trim($this->search)) >= 2) {
             $this->searchPatients();
         } else {
             $this->patients = [];
@@ -113,7 +115,8 @@ class PatientSearch extends Component
             $this->showResults = true;
             
         } catch (\Exception $e) {
-            session()->flash('error', 'Erreur lors de la recherche : ' . $e->getMessage());
+            \Log::error('Erreur lors de la recherche patient', ['exception' => $e]);
+            session()->flash('error', 'La recherche est momentanément indisponible. Veuillez réessayer.');
         } finally {
             $this->isSearching = false;
         }
@@ -199,4 +202,4 @@ class PatientSearch extends Component
     {
         return view('livewire.patient-search');
     }
-} 
+}

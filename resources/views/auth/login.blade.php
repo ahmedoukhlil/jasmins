@@ -95,7 +95,7 @@
             margin-bottom: 16px;
         }
 
-        .field-wrap i {
+        .field-wrap > i {
             position: absolute;
             left: 13px;
             top: 50%;
@@ -107,7 +107,7 @@
 
         .field-wrap input {
             width: 100%;
-            padding: 11px 14px 11px 38px;
+            padding: 11px 42px 11px 38px;
             border: 1.5px solid #e5e7eb;
             border-radius: 10px;
             font-size: 16px; /* 16px évite le zoom auto sur iOS */
@@ -136,7 +136,25 @@
             color: #9ca3af;
             font-size: 13px;
             pointer-events: all;
-            padding: 4px;
+            padding: 8px;
+            border: 0;
+            background: transparent;
+            border-radius: 6px;
+            line-height: 1;
+        }
+
+        .toggle-password:hover,
+        .toggle-password:focus-visible {
+            color: var(--color-primary, #1e3a8a);
+            background: #eff6ff;
+            outline: 2px solid rgba(30, 58, 138, 0.35);
+            outline-offset: 1px;
+        }
+
+        .toggle-password i {
+            position: static;
+            transform: none;
+            pointer-events: none;
         }
 
         .remember-row {
@@ -215,7 +233,7 @@
         <div class="login-body">
 
             @if($errors->any())
-                <div class="error-box">
+                <div class="error-box" role="alert" aria-live="assertive">
                     <i class="fas fa-exclamation-circle"></i>
                     {{ $errors->first() }}
                 </div>
@@ -239,7 +257,10 @@
                     <input id="password" type="password" name="password"
                            placeholder="Votre mot de passe"
                            required autocomplete="current-password">
-                    <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
+                    <button type="button" class="toggle-password" onclick="togglePassword(this)"
+                            aria-label="Afficher le mot de passe" aria-pressed="false">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
+                    </button>
                 </div>
 
                 <div class="remember-row">
@@ -260,15 +281,19 @@
     </div>
 
     <script>
-        function togglePassword() {
+        function togglePassword(button) {
             const input = document.getElementById('password');
-            const icon  = document.querySelector('.toggle-password');
+            const icon  = button.querySelector('i');
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.replace('fa-eye', 'fa-eye-slash');
+                button.setAttribute('aria-label', 'Masquer le mot de passe');
+                button.setAttribute('aria-pressed', 'true');
             } else {
                 input.type = 'password';
                 icon.classList.replace('fa-eye-slash', 'fa-eye');
+                button.setAttribute('aria-label', 'Afficher le mot de passe');
+                button.setAttribute('aria-pressed', 'false');
             }
         }
     </script>

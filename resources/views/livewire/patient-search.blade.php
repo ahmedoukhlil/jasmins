@@ -1,18 +1,25 @@
 <div>
     <div class="relative">
         <div class="flex">
-            <select wire:model.live="searchBy" class="rounded-l-md border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm focus:border-primary focus:ring-primary">
+            <label for="{{ $searchDomId }}-type" class="sr-only">Rechercher un patient par</label>
+            <select id="{{ $searchDomId }}-type" wire:model="searchBy" class="rounded-l-md border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm focus:border-primary focus:ring-primary">
                 <option value="telephone" selected>Téléphone</option>
                 <option value="nom">Nom</option>
                 <option value="identifiant">N° Fiche</option>
             </select>
             <div class="relative flex-1">
                 <input
+                    id="{{ $searchDomId }}-input"
                     type="text"
-                    wire:model.live.debounce.300ms="search"
+                    wire:model.debounce.300ms="search"
                     wire:keydown.enter="ouvrirCreationSiIntrouvable"
                     placeholder="Rechercher un patient..."
                     class="w-full rounded-r-md border-gray-300 focus:border-primary focus:ring-primary sm:text-sm"
+                    role="combobox"
+                    aria-label="Rechercher un patient"
+                    aria-autocomplete="list"
+                    aria-controls="{{ $searchDomId }}-results"
+                    aria-expanded="{{ $showResults ? 'true' : 'false' }}"
                 >
                 <!-- Indicateur de chargement -->
                 <div wire:loading class="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -21,18 +28,24 @@
             </div>
         </div>
 
+        @if(strlen(trim($search)) === 1)
+            <p class="mt-1 text-xs text-gray-500" role="status">Saisissez au moins 2 caractères pour lancer la recherche.</p>
+        @endif
+
     <!-- Résultats de recherche -->
     @if($showResults && count($patients) > 0)
-        <div class="absolute left-0 right-0 top-full mt-1 border border-gray-200 rounded-lg shadow-xl bg-white max-h-64 overflow-y-auto z-50">
+        <div id="{{ $searchDomId }}-results" role="listbox" aria-label="Résultats de la recherche" class="absolute left-0 right-0 top-full mt-1 border border-gray-200 rounded-lg shadow-xl bg-white max-h-64 overflow-y-auto z-50">
             @foreach($patients as $patient)
-                <div
-                    wire:mousedown="selectPatient({{ $patient->ID }})"
-                    class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                <button
+                    type="button"
+                    role="option"
+                    wire:click="selectPatient({{ $patient->ID }})"
+                    class="block w-full p-3 hover:bg-gray-50 focus:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors text-left"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
                             <div class="font-medium text-gray-900">
-                                {{ $patient->Nom }}
+                                {{ trim(($patient->Prenom ?? '') . ' ' . ($patient->Nom ?? '')) }}
                             </div>
                             <div class="text-sm text-gray-600 space-y-1">
                                 @if($patient->IdentifiantPatient)
@@ -65,14 +78,19 @@
                             <i class="fas fa-chevron-right"></i>
                         </div>
                     </div>
-                </div>
+                </button>
             @endforeach
+            @if(count($patients) === 10)
+                <p class="px-3 py-2 text-xs text-gray-500 bg-gray-50" role="status">
+                    Les 10 premiers résultats sont affichés. Précisez la recherche si nécessaire.
+                </p>
+            @endif
         </div>
     @endif
 
     <!-- Message "Aucun résultat" -->
     @if($showResults && count($patients) === 0 && strlen(trim($search)) > 0)
-        <div class="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg border border-gray-200 shadow-xl z-50 overflow-hidden">
+        <div id="{{ $searchDomId }}-results" role="status" class="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg border border-gray-200 shadow-xl z-50 overflow-hidden">
             <div class="px-4 py-3 text-sm text-gray-500 border-b border-gray-100">
                 <i class="fas fa-search mr-1 text-gray-400"></i>
                 Aucun patient trouvé pour <span class="font-medium text-gray-700">"{{ $search }}"</span>
@@ -92,7 +110,7 @@
             <div class="flex items-center justify-between">
                 <div class="flex-1">
                     <div class="font-medium text-primary text-lg">
-                        {{ $selectedPatient['NomPatient'] }}
+                        {{ trim(($selectedPatient['Prenom'] ?? '') . ' ' . ($selectedPatient['NomPatient'] ?? '')) }}
                     </div>
                     <div class="text-sm text-primary-dark">
                         Tél: {{ $selectedPatient['Telephone1'] }}
@@ -111,6 +129,7 @@
                     wire:click="clearPatient"
                     class="text-primary hover:text-primary-dark p-2 rounded-full hover:bg-primary-light transition-colors"
                     title="Effacer la sélection"
+                    aria-label="Effacer la sélection du patient"
                 >
                     <i class="fas fa-times"></i>
                 </button>
@@ -120,7 +139,7 @@
 
     <!-- Messages d'erreur -->
     @if(session()->has('error'))
-        <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <i class="fas fa-exclamation-circle text-red-400"></i>
@@ -133,4 +152,4 @@
             </div>
         </div>
     @endif
-</div> 
+</div>

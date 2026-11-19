@@ -826,16 +826,6 @@ if (!window._sysmedPollingInit) {
 }
 
 document.addEventListener('livewire:load', function () {
-
-    // Active state for patient sub-menu buttons
-    document.addEventListener('click', function(e) {
-        const btn = e.target.closest('.patient-nav-button');
-        if (btn) {
-            document.querySelectorAll('.patient-nav-button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-    });
-
     // Modal loading indicator
     window.addEventListener('modal-loading', function(e) {
         const loadingDiv = document.getElementById('modal-loading');
@@ -847,18 +837,6 @@ document.addEventListener('livewire:load', function () {
         }
     });
 
-    // Keyboard shortcuts (when modal is open)
-    document.addEventListener('keydown', function(e) {
-        if (!document.querySelector('.modal-overlay')) return;
-        if (e.key === 'Escape') {
-            const closeBtn = document.querySelector('button[wire\\:click*="fermer"], button[wire\\:click*="close"], button[wire\\:click*="Close"]');
-            if (closeBtn) closeBtn.click();
-        }
-        if (e.ctrlKey && e.key === 'Enter') {
-            const submitBtn = document.querySelector('button[type="submit"]');
-            if (submitBtn) submitBtn.click();
-        }
-    });
 });
 </script>
 

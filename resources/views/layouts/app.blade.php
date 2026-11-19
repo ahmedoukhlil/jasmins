@@ -39,20 +39,21 @@
 
                 <!-- Bouton menu mobile -->
                 <div class="flex items-center md:hidden">
-                    <button type="button" class="mobile-menu-button inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200">
-                        <i class="fas fa-bars"></i>
+                    <button type="button" class="mobile-menu-button inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                            aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-navigation">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
                     </button>
                 </div>
 
                 <!-- Menu utilisateur -->
                 <div class="hidden md:flex items-center space-x-4">
                     @if(auth()->check())
-                        <div class="relative group">
-                            <button class="flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-gray-200">
+                        <div class="relative" data-user-menu>
+                            <button type="button" data-user-menu-button aria-haspopup="true" aria-expanded="false" aria-controls="user-menu-dropdown" class="flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-gray-200">
                                 <span class="font-medium">{{ auth()->user()->NomComplet ?? auth()->user()->name ?? 'Utilisateur' }}</span>
-                                <i class="fas fa-chevron-down text-sm group-hover:text-blue-600 transition-colors duration-200"></i>
+                                <i class="fas fa-chevron-down text-sm transition-colors duration-200" aria-hidden="true"></i>
                             </button>
-                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100 z-50">
+                            <div id="user-menu-dropdown" data-user-menu-dropdown class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
                                 <div class="py-1">
                                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="block">
                                         @csrf
@@ -73,7 +74,7 @@
         </div>
 
         <!-- Menu mobile -->
-        <div class="mobile-menu hidden md:hidden">
+        <div id="mobile-navigation" class="mobile-menu hidden md:hidden">
             <div class="px-2 pt-2 pb-3 space-y-2">
                
                 
@@ -109,9 +110,34 @@
             const colors = { success:'#16a34a', error:'#dc2626', warning:'#d97706', info:'var(--color-primary)' };
             const t = document.createElement('div');
             t.className = `toast toast-${type}`;
-            t.innerHTML = `<i class="fas ${icons[type]||icons.info}" style="color:${colors[type]||colors.info};flex-shrink:0"></i><span>${message}</span>`;
+            t.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+            const icon = document.createElement('i');
+            icon.className = `fas ${icons[type] || icons.info}`;
+            icon.style.color = colors[type] || colors.info;
+            icon.style.flexShrink = '0';
+            icon.setAttribute('aria-hidden', 'true');
+
+            const text = document.createElement('span');
+            text.textContent = message;
+            text.style.flex = '1';
+
+            const closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.className = 'toast-close';
+            closeButton.setAttribute('aria-label', 'Fermer la notification');
+            closeButton.innerHTML = '<i class="fas fa-times" aria-hidden="true"></i>';
+
+            t.append(icon, text, closeButton);
             container.appendChild(t);
-            setTimeout(() => { t.classList.add('toast-hide'); setTimeout(() => t.remove(), 220); }, duration);
+            let timer;
+            const dismiss = () => {
+                window.clearTimeout(timer);
+                t.classList.add('toast-hide');
+                window.setTimeout(() => t.remove(), 220);
+            };
+            closeButton.addEventListener('click', dismiss);
+            timer = window.setTimeout(dismiss, type === 'error' ? Math.max(duration, 8000) : duration);
         };
 
         /* ─── Livewire toast bridge ─── */
@@ -140,31 +166,173 @@
         };
     </script>
 
-    <!-- Styles for nav-link -->
-    <style>
-        .nav-link {
-            @apply text-gray-600 hover:text-blue-600 px-4 py-2 rounded-lg transition-all duration-200 font-medium hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-gray-200;
-        }
-        .nav-link.active {
-            @apply text-blue-600 bg-blue-50 ring-2 ring-blue-500 ring-offset-2 border-blue-200;
-        }
-        .mobile-nav-link {
-            @apply text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 border border-gray-200;
-        }
-        .mobile-nav-link.active {
-            @apply text-blue-600 bg-blue-50 font-medium border-blue-200;
-        }
-    </style>
-
     <!-- Script pour le menu mobile -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const btn = document.querySelector('.mobile-menu-button');
             const menu = document.querySelector('.mobile-menu');
 
-            btn.addEventListener('click', () => {
-                menu.classList.toggle('hidden');
+            btn?.addEventListener('click', () => {
+                const willOpen = menu.classList.contains('hidden');
+                menu.classList.toggle('hidden', !willOpen);
+                btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                btn.setAttribute('aria-label', willOpen ? 'Fermer le menu' : 'Ouvrir le menu');
             });
+
+            const userMenu = document.querySelector('[data-user-menu]');
+            const userMenuButton = userMenu?.querySelector('[data-user-menu-button]');
+            const userMenuDropdown = userMenu?.querySelector('[data-user-menu-dropdown]');
+            const closeUserMenu = () => {
+                userMenuDropdown?.classList.add('hidden');
+                userMenuButton?.setAttribute('aria-expanded', 'false');
+            };
+
+            userMenuButton?.addEventListener('click', () => {
+                const willOpen = userMenuDropdown.classList.contains('hidden');
+                userMenuDropdown.classList.toggle('hidden', !willOpen);
+                userMenuButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+            document.addEventListener('click', (event) => {
+                if (userMenu && !userMenu.contains(event.target)) closeUserMenu();
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && userMenuButton?.getAttribute('aria-expanded') === 'true') {
+                    closeUserMenu();
+                    userMenuButton.focus();
+                }
+            });
+        });
+    </script>
+
+    <script>
+        /* Gestion centralisée et accessible des modales Livewire. */
+        document.addEventListener('DOMContentLoaded', function () {
+            let activeOverlay = null;
+            let modalCounter = 0;
+            let syncQueued = false;
+
+            const visibleOverlays = () => Array.from(document.querySelectorAll('.modal-overlay'))
+                .filter((overlay) => overlay.getClientRects().length > 0)
+                .sort((a, b) => {
+                    const zA = Number.parseInt(getComputedStyle(a).zIndex, 10) || 0;
+                    const zB = Number.parseInt(getComputedStyle(b).zIndex, 10) || 0;
+                    return zA === zB
+                        ? Array.from(document.querySelectorAll('.modal-overlay')).indexOf(a) - Array.from(document.querySelectorAll('.modal-overlay')).indexOf(b)
+                        : zA - zB;
+                });
+
+            const focusableElements = (box) => Array.from(box.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )).filter((element) => element.getClientRects().length > 0);
+
+            const enhanceOverlay = (overlay) => {
+                const box = overlay.querySelector(':scope > .modal-box') || overlay.querySelector('.modal-box');
+                if (!box) return;
+
+                box.setAttribute('role', 'dialog');
+                box.setAttribute('tabindex', '-1');
+                const title = box.querySelector('.modal-header h2, .modal-header h3, h2, h3');
+                if (title) {
+                    if (!title.id) title.id = `modal-title-${++modalCounter}`;
+                    box.setAttribute('aria-labelledby', title.id);
+                } else {
+                    box.setAttribute('aria-label', 'Fenêtre de dialogue');
+                }
+
+                box.querySelectorAll('.modal-close, .modal-close-button').forEach((button) => {
+                    if (!button.getAttribute('aria-label')) button.setAttribute('aria-label', 'Fermer la fenêtre');
+                });
+            };
+
+            const syncModals = () => {
+                syncQueued = false;
+                const overlays = visibleOverlays();
+                overlays.forEach(enhanceOverlay);
+                const nextActive = overlays[overlays.length - 1] || null;
+
+                overlays.forEach((overlay) => {
+                    const box = overlay.querySelector(':scope > .modal-box') || overlay.querySelector('.modal-box');
+                    const isActive = overlay === nextActive;
+                    const containsActiveModal = Boolean(nextActive && overlay.contains(nextActive));
+                    overlay.setAttribute('aria-hidden', isActive || containsActiveModal ? 'false' : 'true');
+                    box?.setAttribute('aria-modal', isActive ? 'true' : 'false');
+                });
+
+                document.body.classList.toggle('modal-open', overlays.length > 0);
+
+                if (activeOverlay !== nextActive) {
+                    const previous = activeOverlay;
+                    activeOverlay = nextActive;
+
+                    if (nextActive) {
+                        const returnTarget = previous?._returnFocus;
+                        if (returnTarget?.isConnected && nextActive.contains(returnTarget)) {
+                            window.setTimeout(() => returnTarget.focus({ preventScroll: true }), 0);
+                            return;
+                        }
+                        if (!nextActive._returnFocus || !nextActive._returnFocus.isConnected) {
+                            nextActive._returnFocus = document.activeElement;
+                        }
+                        const box = nextActive.querySelector(':scope > .modal-box') || nextActive.querySelector('.modal-box');
+                        const autofocus = box?.querySelector('[autofocus]');
+                        window.setTimeout(() => (autofocus || box)?.focus({ preventScroll: true }), 0);
+                    } else if (previous?._returnFocus?.isConnected) {
+                        previous._returnFocus.focus({ preventScroll: true });
+                    }
+                }
+            };
+
+            const scheduleSync = () => {
+                if (syncQueued) return;
+                syncQueued = true;
+                window.requestAnimationFrame(syncModals);
+            };
+
+            // Les clics sur l'arrière-plan ne ferment plus un formulaire en cours.
+            document.addEventListener('click', (event) => {
+                if (event.target.classList?.contains('modal-overlay')) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            }, true);
+
+            document.addEventListener('keydown', (event) => {
+                if (!activeOverlay) return;
+                const box = activeOverlay.querySelector(':scope > .modal-box') || activeOverlay.querySelector('.modal-box');
+                if (!box) return;
+
+                if (event.key === 'Escape') {
+                    const closeButton = box.querySelector('.modal-close, .modal-close-button');
+                    if (closeButton) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        closeButton.click();
+                    }
+                    return;
+                }
+
+                if (event.key === 'Tab') {
+                    const focusable = focusableElements(box);
+                    if (!focusable.length) {
+                        event.preventDefault();
+                        box.focus();
+                        return;
+                    }
+                    const first = focusable[0];
+                    const last = focusable[focusable.length - 1];
+                    if (event.shiftKey && (document.activeElement === first || !box.contains(document.activeElement))) {
+                        event.preventDefault();
+                        last.focus();
+                    } else if (!event.shiftKey && document.activeElement === last) {
+                        event.preventDefault();
+                        first.focus();
+                    }
+                }
+            }, true);
+
+            new MutationObserver(scheduleSync).observe(document.body, { childList: true, subtree: true });
+            document.addEventListener('livewire:load', scheduleSync);
+            scheduleSync();
         });
     </script>
 
@@ -173,6 +341,7 @@
         window.confirmAction = function(title, message, onConfirm) {
             // Supprimer un éventuel dialog existant
             document.getElementById('_confirm_dialog')?.remove();
+            const returnFocus = document.activeElement;
 
             const overlay = document.createElement('div');
             overlay.id = '_confirm_dialog';
@@ -188,7 +357,31 @@
                 </div>`;
             document.body.appendChild(overlay);
 
-            const close = () => overlay.remove();
+            const close = () => {
+                document.removeEventListener('keydown', onKeyDown, true);
+                overlay.remove();
+                if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+            };
+            const onKeyDown = (event) => {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    close();
+                    return;
+                }
+                if (event.key === 'Tab') {
+                    const buttons = Array.from(overlay.querySelectorAll('button'));
+                    const first = buttons[0];
+                    const last = buttons[buttons.length - 1];
+                    if (event.shiftKey && document.activeElement === first) {
+                        event.preventDefault();
+                        last.focus();
+                    } else if (!event.shiftKey && document.activeElement === last) {
+                        event.preventDefault();
+                        first.focus();
+                    }
+                }
+            };
+            document.addEventListener('keydown', onKeyDown, true);
             overlay.querySelector('#_cd_cancel').addEventListener('click', close);
             overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
             overlay.querySelector('#_cd_ok').addEventListener('click', () => {
