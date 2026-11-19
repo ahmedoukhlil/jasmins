@@ -4,19 +4,23 @@ namespace App\Http\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 use App\Models\Medicament;
 use App\Models\StockMedicament;
 use App\Models\LotMedicament;
 use App\Models\MouvementStock;
 use App\Services\StockService;
+use App\Services\MedicamentStockImportService;
+use App\Services\MedicamentStockTemplateService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class MedicamentManager extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public $search = '';
     public $selectedType = '';
@@ -34,6 +38,9 @@ class MedicamentManager extends Component
     public $showDeleteModal = false;
     public $medicamentToDelete;
     public $showStockModal = false;
+    public $showImportModal = false;
+    public $importFile;
+    public $importResult = null;
     
     // Propriétés pour l'ajout de stock
     public $stockMedicamentId;
@@ -279,6 +286,92 @@ class MedicamentManager extends Component
         session()->flash('message', 'Stock ajouté avec succès.');
         // Réinitialiser les champs sauf le médicament pour permettre d'ajouter plus de stock
         $this->resetStockForm();
+    }
+
+    public function openImportModal()
+    {
+        $this->resetValidation('importFile');
+        $this->importFile = null;
+        $this->importResult = null;
+        $this->showImportModal = true;
+    }
+
+    public function downloadImportTemplate()
+    {
+        try {
+            $spreadsheet = app(MedicamentStockTemplateService::class)->buildForCabinet(
+                (int) (Auth::user()->fkidcabinet ?? 1)
+            );
+
+            return response()->streamDownload(function () use ($spreadsheet) {
+                (new Xlsx($spreadsheet))->save('php://output');
+                $spreadsheet->disconnectWorksheets();
+            }, 'modele_import_medicaments_stock_' . now()->format('Ymd') . '.xlsx', [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ]);
+        } catch (\Throwable $exception) {
+            if (!$exception instanceof \DomainException) {
+                report($exception);
+            }
+            session()->flash(
+                'error',
+                $exception instanceof \DomainException
+                    ? $exception->getMessage()
+                    : 'Le modèle Excel n\'a pas pu être généré.'
+            );
+            return null;
+        }
+    }
+
+    public function closeImportModal()
+    {
+        $this->showImportModal = false;
+        $this->importFile = null;
+        $this->importResult = null;
+        $this->resetValidation('importFile');
+    }
+
+    public function importMedicamentsStock()
+    {
+        $this->validate([
+            'importFile' => 'required|file|mimes:xlsx,xls|max:5120',
+        ], [
+            'importFile.required' => 'Sélectionnez le fichier Excel à importer.',
+            'importFile.mimes' => 'Le fichier doit être au format Excel .xlsx ou .xls.',
+            'importFile.max' => 'Le fichier ne doit pas dépasser 5 Mo.',
+        ]);
+
+        try {
+            $service = app(MedicamentStockImportService::class);
+            $rows = $service->readFile($this->importFile->getRealPath());
+            if (count($rows) === 0) {
+                throw new \DomainException('Le fichier ne contient aucune ligne de médicament à importer.');
+            }
+
+            $this->importResult = $service->importRows(
+                $rows,
+                (int) (Auth::user()->fkidcabinet ?? 1),
+                (int) Auth::id()
+            );
+
+            Cache::forget('referentiel_medicaments_v2_' . (Auth::user()->fkidcabinet ?? 1));
+            $this->importFile = null;
+            $this->resetPage();
+
+            if (count($this->importResult['errors']) === 0) {
+                session()->flash('message', 'Import Excel terminé avec succès.');
+            }
+        } catch (\Throwable $exception) {
+            if (!$exception instanceof \DomainException) {
+                report($exception);
+            }
+            $this->addError(
+                'importFile',
+                $exception instanceof \DomainException
+                    ? $exception->getMessage()
+                    : 'Le fichier n\'a pas pu être lu. Vérifiez qu\'il provient du modèle Excel fourni.'
+            );
+        }
     }
 
     public function render()

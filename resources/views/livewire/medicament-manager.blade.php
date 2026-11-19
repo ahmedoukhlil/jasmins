@@ -6,6 +6,12 @@
     </div>
     @endif
 
+    @if(session()->has('error'))
+    <div class="mb-4 flex items-center gap-2 px-4 py-3 bg-red-50 border-l-4 border-red-500 rounded text-red-800 text-sm">
+        <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+    </div>
+    @endif
+
     {{-- Onglets --}}
     <div class="flex border-b border-gray-200 mb-5">
         <button wire:click="switchTab('medicaments')"
@@ -19,6 +25,22 @@
             <i class="fas fa-microscope"></i> Analyses & Radios
         </button>
     </div>
+
+    @if($activeTab === 'medicaments')
+    <div class="mb-5 flex flex-col sm:flex-row sm:items-center gap-3">
+        <button type="button" wire:click="downloadImportTemplate" wire:loading.attr="disabled"
+            wire:target="downloadImportTemplate"
+            class="btn-secondary inline-flex items-center justify-center gap-2">
+            <i class="fas fa-file-download"></i> Télécharger le modèle Excel
+        </button>
+        <button type="button" wire:click="openImportModal" class="btn-primary">
+            <i class="fas fa-file-excel"></i> Importer médicaments et stock
+        </button>
+        <p class="text-xs text-gray-500">
+            Les médicaments existants sont réutilisés. Seuls les libellés absents sont créés.
+        </p>
+    </div>
+    @endif
 
     {{-- Formulaire ajout --}}
     <div class="mb-6 bg-primary-light border-l-4 border-primary rounded-lg p-4">
@@ -243,6 +265,90 @@
                         <button type="button" wire:click="closeStockModal" class="btn-secondary">Annuler</button>
                         <button type="submit" class="btn-primary">
                             <i class="fas fa-plus mr-1"></i> Ajouter au stock
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal import Excel médicaments et stock --}}
+    @if($showImportModal)
+    <div class="modal-overlay" style="z-index:60;">
+        <div class="modal-box max-w-3xl w-full">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-excel mr-2"></i>Importer médicaments et stock</h2>
+                <button wire:click="closeImportModal" class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                    Utilisez le modèle sans renommer les colonnes. La comparaison des libellés ignore les majuscules,
+                    les accents et les espaces supplémentaires afin d'éviter les doublons. Le prix de référence du
+                    fichier est utilisé uniquement quand un nouveau médicament doit être créé.
+                </div>
+
+                <form wire:submit.prevent="importMedicamentsStock" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fichier Excel *</label>
+                        <input type="file" wire:model="importFile" accept=".xlsx,.xls"
+                            class="form-input bg-white">
+                        @error('importFile') <span class="text-red-500 text-xs block mt-1">{{ $message }}</span> @enderror
+                        <div wire:loading wire:target="importFile" class="text-xs text-gray-500 mt-1">
+                            Chargement du fichier...
+                        </div>
+                    </div>
+
+                    @if($importResult)
+                    <div class="rounded-lg border border-gray-200 p-4">
+                        <h3 class="font-semibold text-gray-800 mb-3">Résultat de l'import</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div class="rounded bg-green-50 p-3">
+                                <div class="text-green-700 font-semibold">{{ $importResult['stockEntries'] }}</div>
+                                <div class="text-gray-600">entrées de stock</div>
+                            </div>
+                            <div class="rounded bg-blue-50 p-3">
+                                <div class="text-blue-700 font-semibold">{{ $importResult['createdMedicaments'] }}</div>
+                                <div class="text-gray-600">médicaments créés</div>
+                            </div>
+                            <div class="rounded bg-gray-50 p-3">
+                                <div class="text-gray-700 font-semibold">{{ $importResult['existingMedicaments'] }}</div>
+                                <div class="text-gray-600">médicaments réutilisés</div>
+                            </div>
+                            <div class="rounded {{ count($importResult['errors']) ? 'bg-red-50' : 'bg-green-50' }} p-3">
+                                <div class="{{ count($importResult['errors']) ? 'text-red-700' : 'text-green-700' }} font-semibold">
+                                    {{ count($importResult['errors']) }}
+                                </div>
+                                <div class="text-gray-600">lignes rejetées</div>
+                            </div>
+                        </div>
+
+                        @if(count($importResult['errors']))
+                        <div class="mt-4 max-h-48 overflow-y-auto rounded border border-red-200 bg-red-50 p-3">
+                            <p class="text-sm font-semibold text-red-800 mb-2">Lignes à corriger</p>
+                            <ul class="space-y-1 text-xs text-red-700">
+                                @foreach(array_slice($importResult['errors'], 0, 20) as $importError)
+                                <li>Ligne {{ $importError['row'] }} : {{ $importError['message'] }}</li>
+                                @endforeach
+                            </ul>
+                            @if(count($importResult['errors']) > 20)
+                            <p class="text-xs text-red-700 mt-2">
+                                {{ count($importResult['errors']) - 20 }} autre(s) erreur(s) non affichée(s).
+                            </p>
+                            @endif
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" wire:click="closeImportModal" class="btn-secondary">Fermer</button>
+                        <button type="submit" class="btn-primary" wire:loading.attr="disabled"
+                            wire:target="importFile,importMedicamentsStock">
+                            <span wire:loading.remove wire:target="importMedicamentsStock">
+                                <i class="fas fa-upload mr-1"></i> Importer
+                            </span>
+                            <span wire:loading wire:target="importMedicamentsStock">Import en cours...</span>
                         </button>
                     </div>
                 </form>
